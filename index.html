@@ -110,19 +110,25 @@ th,td{padding:5px;text-align:left;border:1px solid #0ff;font-size:0.9rem;}
   </div>
 
   <!-- Leave Management -->
-  <div id="leaveManagement" class="section">
-    <h3>Leave Management</h3>
-    <input type="text" id="leaveSearchInput" placeholder="Search student by Admission No" onkeyup="searchLeaveStudent()"><br>
-    <select id="leaveStudent"></select><br>
-    <input type="date" id="leaveFrom">
-    <input type="date" id="leaveTo"><br>
-    <input type="text" id="leaveReason" placeholder="Reason"><br>
-    <input type="text" id="leaveParent" placeholder="Parent Name"><br>
-    <button onclick="applyLeave()">Apply Leave</button>
-    <h4>Leave History</h4>
-    <table id="leaveHistory"></table>
-  </div>
-
+ <div id="leaveManagement" class="section">
+  <h3>Leave Management</h3>
+  <input type="text" id="leaveSearchInput" placeholder="Search student by Admission No" onkeyup="searchLeaveStudent()"><br>
+  <select id="leaveStudent"></select><br>
+  <label>
+    <input type="radio" name="leaveType" value="one" checked> One Day
+  </label>
+  <label>
+    <input type="radio" name="leaveType" value="full"> Full Day
+  </label><br>
+  <input type="date" id="leaveFrom">
+  <input type="date" id="leaveTo"><br>
+  <input type="text" id="leaveReason" placeholder="Reason"><br>
+  <input type="text" id="leaveParent" placeholder="Parent Name"><br>
+  <button onclick="applyLeave()">Apply Leave</button>
+  <button onclick="downloadLeaveHistory()">Download Leave History</button>
+  <h4>Leave History</h4>
+  <table id="leaveHistory"></table>
+</div>
   <!-- Timetable -->
   <div id="timetable" class="section">
     <h3>Timetable</h3>
@@ -208,19 +214,19 @@ function loadCards(){
 }
 
 // Leave Counts
-function getLeaveCount(adm,type){
-  const today=new Date(); let count=0;
-  leaves.forEach(l=>{
-    if(l.studentNo!==adm) return;
-    const from=new Date(l.from); const to=new Date(l.to);
-    for(let d=new Date(from);d<=to;d.setDate(d.getDate()+1)){
-      if(type==="day" && d.toDateString()===today.toDateString()) count++;
-      if(type==="week" && getWeekNumber(d)===getWeekNumber(today)) count++;
-      if(type==="month" && d.getMonth()===today.getMonth() && d.getFullYear()===today.getFullYear()) count++;
-      if(type==="year" && d.getFullYear()===today.getFullYear()) count++;
+function getLeaveCount(adm){
+  let count = 0;
+  leaves.forEach(l => {
+    if(l.studentNo !== adm) return;
+    const from = new Date(l.from);
+    const to = new Date(l.to);
+    for(let d = new Date(from); d <= to; d.setDate(d.getDate()+1)){
+      count++;
     }
-  }); return count;
+  });
+  return count;
 }
+
 function getWeekNumber(d){d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const dayNum=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-dayNum);const yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1));return Math.ceil((((d-yearStart)/86400000)+1)/7);}
 
 // Search & Filter
@@ -352,6 +358,27 @@ function uploadExcel(e){
         });
       }
     });
+    // Apply Leave with One Day / Full Day option
+function applyLeave(){
+  if(currentUserRole !== "teacher1"){ alert("Only Teacher1 can apply leave"); return; }
+  const studentNo = document.getElementById("leaveStudent").value;
+  const leaveType = document.querySelector('input[name="leaveType"]:checked').value;
+  let from = document.getElementById("leaveFrom").value;
+  let to = document.getElementById("leaveTo").value;
+  const reason = document.getElementById("leaveReason").value;
+  const parentName = document.getElementById("leaveParent").value;
+
+  if(!from || !to || !reason || !parentName){ alert("Fill all fields"); return; }
+  
+  // If one day leave, set to = from
+  if(leaveType === "one") to = from;
+
+  leaves.push({studentNo, from, to, reason, parentName});
+  localStorage.setItem("leaves", JSON.stringify(leaves));
+  displayLeaveHistory(); loadCards();
+  alert("Leave Applied Successfully!");
+}
+
     loadCards();
     alert("Excel Uploaded Successfully!");
   };
@@ -397,6 +424,60 @@ function login(){
   displayTimetable();
   showSection("students");
 }
+  
+// Display Leave History
+function displayLeaveHistory(){
+  const table = document.getElementById("leaveHistory");
+  table.innerHTML = `<tr><th>Student</th><th>From</th><th>To</th><th>Reason</th><th>Parent</th><th>Action</th></tr>`;
+  leaves.forEach((l,i)=>{
+    const s = students.find(st => st.admissionNo === l.studentNo);
+    table.innerHTML += `<tr>
+      <td>${s?s.name:l.studentNo}</td>
+      <td>${l.from}</td>
+      <td>${l.to}</td>
+      <td>${l.reason}</td>
+      <td>${l.parentName}</td>
+      <td>${currentUserRole==="teacher1"?`<button onclick="deleteLeave(${i})">Delete</button>`:"-"}</td>
+    </tr>`;
+  });
+}
+  
+// Download Leave History as Excel
+function downloadLeaveHistory(){
+  const wb = XLSX.utils.book_new();
+  const leaveSheet = XLSX.utils.json_to_sheet(leaves.map(l=>{
+    const s = students.find(st => st.admissionNo === l.studentNo);
+    return {AdmissionNo: s.admissionNo, Name: s.name, From: l.from, To: l.to, Reason: l.reason, Parent: l.parentName};
+  }));
+  XLSX.utils.book_append_sheet(wb, leaveSheet, "Leaves");
+  XLSX.writeFile(wb, "Leave_History.xlsx");
+}
+
+// Update student cards to show only total leave
+function loadCards(){
+  const sContainer = document.getElementById("studentCards");
+  const leaveSelect = document.getElementById("leaveStudent");
+  sContainer.innerHTML = ""; leaveSelect.innerHTML = "";
+  students.forEach(s => {
+    if((currentUserRole==="student" || currentUserRole==="parent") && s.admissionNo!==currentStudent) return;
+    sContainer.innerHTML += `
+      <div class="card">
+        <img src="${s.img}" alt="${s.name}">
+        <h3>${s.name}</h3>
+        <p>Admission No: ${s.admissionNo}</p>
+        <p>Class: ${s.class}</p>
+        <p>Hostel: ${s.hostel}</p>
+        <p>House: ${s.house}</p>
+        <p>Phone: ${s.phone}</p>
+        <p>Father: ${s.fatherName}</p>
+        <p>Mother: ${s.motherName}</p>
+        <p>Address: ${s.address}</p>
+        <p>Total Leave Days: ${getLeaveCount(s.admissionNo)}</p>
+        ${currentUserRole==="teacher1"?`<button onclick="editStudent('${s.admissionNo}')">Edit Info</button>`:""}
+      </div>`;
+    if(currentUserRole==="teacher1") leaveSelect.innerHTML += `<option value="${s.admissionNo}">${s.name} (${s.admissionNo})</option>`;
+  });
+}
 
 // You can reuse all previous JS functions for:
 // loadCards(), filterStudents(), searchLeaveStudent(), applyLeave(), displayLeaveHistory(), getLeaveCount(), addTimetable(), displayTimetable(), uploadExcel(), downloadExcel(), showSection(), logout()
@@ -404,4 +485,5 @@ function login(){
 </script>
 </body>
 </html>
+
 
