@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JNV Kathua Student Management</title>
+<style>
+body{
+  font-family:Arial,sans-serif;
+  background:#111;
+  color:#fff;
+  margin:0;
+  padding:0;
+}
+#loginContainer{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  background: url('https://i.imgur.com/7h5R6xg.jpg') no-repeat center center/cover;
+  flex-direction:column;
+  text-align:center;
+}
+#loginContainer h1{
+  color:#0ff;
+  text-shadow: 0 0 10px #0ff;
+}
+.container{padding:20px;}
+input,select,button{padding:8px;margin:5px;border-radius:5px;border:none;outline:none;font-size:1rem;}
+button{
+  cursor:pointer;
+  background:linear-gradient(45deg,#ff00ff,#00ffff);
+  color:#fff;
+  font-weight:bold;
+  box-shadow:0 0 10px #ff00ff,0 0 20px #00ffff;
+  transition:0.3s;
+}
+button:hover{transform:scale(1.05);}
+.card{
+  background:#222;
+  margin:10px;
+  padding:15px;
+  border-radius:10px;
+  box-shadow:0 0 15px #ff00ff,0 0 30px #00ffff;
+  width:250px;
+  display:inline-block;
+  vertical-align:top;
+  transition:0.3s;
+}
+.card:hover{transform:scale(1.05);}
+.card img{
+  width:100%;
+  border-radius:10px;
+  box-shadow:0 0 10px #fff;
+}
+h3{margin:5px 0;}
+.section{display:none;}
+#studentCards{display:flex;flex-wrap:wrap;justify-content:center;}
+table{width:100%;border-collapse:collapse;margin-top:10px;}
+th,td{padding:5px;text-align:left;border:1px solid #0ff;font-size:0.9rem;}
+@media screen and (max-width:768px){
+  .card{width:90%;}
+  input,select,button{width:90%; margin:5px 0;}
+  table,th,td{font-size:0.8rem;}
+}
+#developer{color:#0ff;margin-top:10px;text-shadow:0 0 5px #0ff;}
+</style>
+</head>
+<body>
+
+<div id="loginContainer">
+  <h1>JNV Kathua Student Management</h1>
+  <h3>Developed by Sankalp Sir</h3>
+  <input type="text" id="email" placeholder="Email / Admission No"><br>
+  <input type="password" id="password" placeholder="Password"><br>
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="dashboard" class="container" style="display:none;">
+  <h2>Dashboard</h2>
+  <button onclick="showSection('students')">Students</button>
+  <button onclick="showSection('leaveManagement')">Leave Management</button>
+  <button onclick="showSection('timetable')">Timetable</button>
+  <input type="file" id="uploadExcel" style="display:none" onchange="uploadExcel(event)">
+  <button id="uploadBtn" onclick="document.getElementById('uploadExcel').click()">Upload Students Excel</button>
+  <button onclick="downloadExcel()" id="exportBtn">Export Excel</button>
+  <button onclick="logout()">Logout</button>
+
+  <!-- Students -->
+  <div id="students" class="section">
+    <h3>Students</h3>
+    <input type="text" id="studentSearch" placeholder="Search by name or admission no" onkeyup="filterStudents()"><br>
+    <select id="hostelFilter" onchange="filterStudents()">
+      <option value="">All Hostels</option>
+      <option value="Tagore">Tagore</option>
+      <option value="Nehru">Nehru</option>
+      <option value="Gandhi">Gandhi</option>
+      <option value="Patel">Patel</option>
+      <option value="Vivekananda">Vivekananda</option>
+      <option value="Raman">Raman</option>
+    </select>
+    <select id="houseFilter" onchange="filterStudents()">
+      <option value="">All Houses</option>
+      <option value="Blue">Blue</option>
+      <option value="Red">Red</option>
+      <option value="Green">Green</option>
+      <option value="Yellow">Yellow</option>
+    </select>
+    <div id="studentCards"></div>
+  </div>
+
+  <!-- Leave Management -->
+  <div id="leaveManagement" class="section">
+    <h3>Leave Management</h3>
+    <input type="text" id="leaveSearchInput" placeholder="Search student by Admission No" onkeyup="searchLeaveStudent()"><br>
+    <select id="leaveStudent"></select><br>
+    <input type="date" id="leaveFrom">
+    <input type="date" id="leaveTo"><br>
+    <input type="text" id="leaveReason" placeholder="Reason"><br>
+    <input type="text" id="leaveParent" placeholder="Parent Name"><br>
+    <button onclick="applyLeave()">Apply Leave</button>
+    <h4>Leave History</h4>
+    <table id="leaveHistory"></table>
+  </div>
+
+  <!-- Timetable -->
+  <div id="timetable" class="section">
+    <h3>Timetable</h3>
+    <select id="ttClass">
+      <option value="10-A">10-A</option>
+      <option value="10-B">10-B</option>
+      <option value="12-A">12-A</option>
+      <option value="12-B">12-B</option>
+    </select>
+    <input type="date" id="ttDate">
+    <input type="time" id="ttTime">
+    <input type="text" id="ttTopic" placeholder="Topic">
+    <button onclick="addTimetable()">Add</button>
+    <table id="timetableTable"></table>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const users=[
+  {email:"teacher@gmail.com",password:"1234",role:"teacher1"},
+  {email:"teacher2@gmail.com",password:"1234",role:"teacher2"},
+  {email:"student@gmail.com",password:"1234",role:"student",admissionNo:"JNVT001"},
+  {email:"parent@gmail.com",password:"1234",role:"parent",admissionNo:"JNVT001"}
+];
+let currentUserRole="",currentStudent="";
+
+let students=[
+  {admissionNo:"JNVT001",name:"Aayush Singh",class:"12-A",hostel:"Tagore",house:"Blue",phone:"9876543210",email:"aayush@gmail.com",img:"https://i.imgur.com/zH1jQ7T.jpg",fatherName:"Mr. Singh",motherName:"Mrs. Singh",address:"Kathua, J&K"},
+  {admissionNo:"JNVT002",name:"Rohan Sharma",class:"12-B",hostel:"Nehru",house:"Red",phone:"9876543211",email:"rohan@gmail.com",img:"https://i.imgur.com/8Km9tLL.jpg",fatherName:"Mr. Sharma",motherName:"Mrs. Sharma",address:"Kathua, J&K"},
+  {admissionNo:"JNVT003",name:"Priya Verma",class:"11-A",hostel:"Gandhi",house:"Green",phone:"9876543212",email:"priya@gmail.com",img:"https://i.imgur.com/z9qZQXW.jpg",fatherName:"Mr. Verma",motherName:"Mrs. Verma",address:"Kathua, J&K"},
+  {admissionNo:"JNVT004",name:"Anjali Gupta",class:"10-A",hostel:"Patel",house:"Yellow",phone:"9876543213",email:"anjali@gmail.com",img:"https://i.imgur.com/P5eJqOX.jpg",fatherName:"Mr. Gupta",motherName:"Mrs. Gupta",address:"Kathua, J&K"},
+  {admissionNo:"JNVT005",name:"Manish Yadav",class:"9-B",hostel:"Vivekananda",house:"Blue",phone:"9876543214",email:"manish@gmail.com",img:"https://i.imgur.com/8Km9tLL.jpg",fatherName:"Mr. Yadav",motherName:"Mrs. Yadav",address:"Kathua, J&K"},
+  {admissionNo:"JNVT006",name:"Sakshi Chauhan",class:"8-A",hostel:"Raman",house:"Red",phone:"9876543215",email:"sakshi@gmail.com",img:"https://i.imgur.com/z9qZQXW.jpg",fatherName:"Mr. Chauhan",motherName:"Mrs. Chauhan",address:"Kathua, J&K"},
+  {admissionNo:"JNVT007",name:"Ravi Kumar",class:"7-A",hostel:"Tagore",house:"Green",phone:"9876543216",email:"ravi@gmail.com",img:"https://i.imgur.com/P5eJqOX.jpg",fatherName:"Mr. Kumar",motherName:"Mrs. Kumar",address:"Kathua, J&K"}
+];
+
+let leaves=JSON.parse(localStorage.getItem("leaves")||"[]");
+let timetable=JSON.parse(localStorage.getItem("timetable")||"[]");
+
+
+// Login
+function login(){
+  const email=document.getElementById("email").value;
+  const pass=document.getElementById("password").value;
+  const user=users.find(u=>u.email===email && u.password===pass);
+  if(!user){alert("Invalid credentials");return;}
+  currentUserRole=user.role;
+  if(user.admissionNo) currentStudent=user.admissionNo;
+  document.getElementById("loginContainer").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+  if(currentUserRole==="teacher1") document.getElementById("uploadExcel").style.display="block";
+  loadCards();displayLeaveHistory();displayTimetable();showSection("students");
+}
+
+// Load student cards
+function loadCards(){
+  const sContainer=document.getElementById("studentCards");
+  const leaveSelect=document.getElementById("leaveStudent");
+  sContainer.innerHTML=""; leaveSelect.innerHTML="";
+  students.forEach(s=>{
+    if((currentUserRole==="student" || currentUserRole==="parent") && s.admissionNo!==currentStudent) return;
+    sContainer.innerHTML+=`
+      <div class="card">
+        <img src="${s.img}" alt="${s.name}">
+        <h3>${s.name}</h3>
+        <p>Admission No: ${s.admissionNo}</p>
+        <p>Class: ${s.class}</p>
+        <p>Hostel: ${s.hostel}</p>
+        <p>House: ${s.house}</p>
+        <p>Phone: ${s.phone}</p>
+        <p>Father: ${s.fatherName}</p>
+        <p>Mother: ${s.motherName}</p>
+        <p>Address: ${s.address}</p>
+        <p>Leave Stats:</p>
+        <p>Day: ${getLeaveCount(s.admissionNo,"day")}</p>
+        <p>Week: ${getLeaveCount(s.admissionNo,"week")}</p>
+        <p>Month: ${getLeaveCount(s.admissionNo,"month")}</p>
+        ${currentUserRole==="teacher1"?`<button onclick="editStudent('${s.admissionNo}')">Edit Info</button>`:""}
+      </div>`;
+    if(currentUserRole==="teacher1") leaveSelect.innerHTML+=`<option value="${s.admissionNo}">${s.name} (${s.admissionNo})</option>`;
+  });
+}
+
+// Leave Counts
+function getLeaveCount(adm,type){
+  const today=new Date(); let count=0;
+  leaves.forEach(l=>{
+    if(l.studentNo!==adm) return;
+    const from=new Date(l.from); const to=new Date(l.to);
+    for(let d=new Date(from);d<=to;d.setDate(d.getDate()+1)){
+      if(type==="day" && d.toDateString()===today.toDateString()) count++;
+      if(type==="week" && getWeekNumber(d)===getWeekNumber(today)) count++;
+      if(type==="month" && d.getMonth()===today.getMonth() && d.getFullYear()===today.getFullYear()) count++;
+      if(type==="year" && d.getFullYear()===today.getFullYear()) count++;
+    }
+  }); return count;
+}
+function getWeekNumber(d){d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const dayNum=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-dayNum);const yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1));return Math.ceil((((d-yearStart)/86400000)+1)/7);}
+
+// Search & Filter
+function searchStudents(){filterStudents();}
+function filterStudents(){
+  const hostel=document.getElementById("hostelFilter").value;
+  const house=document.getElementById("houseFilter").value;
+  const query=document.getElementById("studentSearch").value.toLowerCase();
+  const sContainer=document.getElementById("studentCards");
+  sContainer.innerHTML="";
+  students.forEach(s=>{
+    if((currentUserRole==="student" || currentUserRole==="parent") && s.admissionNo!==currentStudent) return;
+    if((hostel && s.hostel!==hostel) || (house && s.house!==house)) return;
+    if(s.name.toLowerCase().includes(query) || s.admissionNo.toLowerCase().includes(query)){
+      sContainer.innerHTML+=`
+        <div class="card">
+          <img src="${s.img}" alt="${s.name}">
+          <h3>${s.name}</h3>
+          <p>Admission No: ${s.admissionNo}</p>
+          <p>Class: ${s.class}</p>
+          <p>Hostel: ${s.hostel}</p>
+          <p>House: ${s.house}</p>
+          <p>Phone: ${s.phone}</p>
+          <p>Father: ${s.fatherName}</p>
+          <p>Mother: ${s.motherName}</p>
+          <p>Address: ${s.address}</p>
+          <p>Leave Stats:</p>
+          <p>Day: ${getLeaveCount(s.admissionNo,"day")}</p>
+          <p>Week: ${getLeaveCount(s.admissionNo,"week")}</p>
+          <p>Month: ${getLeaveCount(s.admissionNo,"month")}</p>
+          ${currentUserRole==="teacher1"?`<button onclick="editStudent('${s.admissionNo}')">Edit Info</button>`:""}
+        </div>`;
+    }
+  });
+}
+
+// Leave Management
+function searchLeaveStudent(){
+  const query=document.getElementById("leaveSearchInput").value.toLowerCase();
+  const leaveSelect=document.getElementById("leaveStudent");
+  leaveSelect.innerHTML="";
+  students.forEach(s=>{
+    if(s.admissionNo.toLowerCase().includes(query)){
+      leaveSelect.innerHTML+=`<option value="${s.admissionNo}">${s.name} (${s.admissionNo})</option>`;
+    }
+  });
+}
+function applyLeave(){
+  if(currentUserRole!=="teacher1"){alert("Only Teacher1 can apply leave"); return;}
+  const studentNo=document.getElementById("leaveStudent").value;
+  const from=document.getElementById("leaveFrom").value;
+  const to=document.getElementById("leaveTo").value;
+  const reason=document.getElementById("leaveReason").value;
+  const parentName=document.getElementById("leaveParent").value;
+  if(!from||!to||!reason||!parentName){alert("Fill all fields");return;}
+  leaves.push({studentNo,from,to,reason,parentName});
+  localStorage.setItem("leaves",JSON.stringify(leaves));
+  displayLeaveHistory(); loadCards();
+  alert("Leave Applied Successfully!");
+}
+function deleteLeave(i){
+  if(!confirm("Are you sure to delete this leave?")) return;
+  leaves.splice(i,1); localStorage.setItem("leaves",JSON.stringify(leaves));
+  displayLeaveHistory(); loadCards();
+}
+function displayLeaveHistory(){
+  const table=document.getElementById("leaveHistory");
+  table.innerHTML=`<tr><th>Student</th><th>From</th><th>To</th><th>Reason</th><th>Parent</th><th>Action</th></tr>`;
+  leaves.forEach((l,i)=>{
+    const s=students.find(st=>st.admissionNo===l.studentNo);
+    table.innerHTML+=`<tr>
+      <td>${s?s.name:l.studentNo}</td>
+      <td>${l.from}</td>
+      <td>${l.to}</td>
+      <td>${l.reason}</td>
+      <td>${l.parentName}</td>
+      <td>${currentUserRole==="teacher1"?`<button onclick="deleteLeave(${i})">Delete</button>`:"-"}</td>
+    </tr>`;
+  });
+}
+
+// Timetable
+function addTimetable(){
+  if(currentUserRole!=="teacher2"){alert("Only Teacher2 can add timetable");return;}
+  const cls=document.getElementById("ttClass").value;
+  const date=document.getElementById("ttDate").value;
+  const time=document.getElementById("ttTime").value;
+  const topic=document.getElementById("ttTopic").value;
+  if(!date||!time||!topic){alert("Fill all fields");return;}
+  timetable.push({cls,date,time,topic});
+  localStorage.setItem("timetable",JSON.stringify(timetable));
+  displayTimetable();
+}
+function displayTimetable(){
+  const table=document.getElementById("timetableTable");
+  table.innerHTML=`<tr><th>Class</th><th>Date</th><th>Time</th><th>Topic</th></tr>`;
+  timetable.forEach(t=>{
+    table.innerHTML+=`<tr><td>${t.cls}</td><td>${t.date}</td><td>${t.time}</td><td>${t.topic}</td></tr>`;
+  });
+}
+
+// Navigation
+function showSection(id){
+  document.querySelectorAll(".section").forEach(sec=>sec.style.display="none");
+  document.getElementById(id).style.display="block";
+}
+
+// Logout
+function logout(){
+  document.getElementById("dashboard").style.display="none";
+  document.getElementById("loginContainer").style.display="flex";
+}
+
+// Excel Upload (Teacher1 only)
+function uploadExcel(e){
+  if(currentUserRole!=="teacher1"){alert("Only Teacher1 can upload Excel");return;}
+  const file=e.target.files[0];
+  const reader=new FileReader();
+  reader.onload=function(event){
+    const data=new Uint8Array(event.target.result);
+    const wb=XLSX.read(data,{type:'array'});
+    const sheet=wb.Sheets[wb.SheetNames[0]];
+    const json=XLSX.utils.sheet_to_json(sheet);
+    json.forEach(s=>{
+      if(!students.find(st=>st.admissionNo===s.AdmissionNo)){
+        students.push({
+          admissionNo:s.AdmissionNo,name:s.Name,class:s.Class,hostel:s.Hostel,house:s.House,
+          phone:s.Phone,email:s.Email,img:s.Image,fatherName:s.Father,motherName:s.Mother,address:s.Address
+        });
+      }
+    });
+    loadCards();
+    alert("Excel Uploaded Successfully!");
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Excel Download
+function downloadExcel(){
+  const wb=XLSX.utils.book_new();
+  const studentSheet=XLSX.utils.json_to_sheet(students);
+  XLSX.utils.book_append_sheet(wb,studentSheet,"Students");
+  const leaveSheet=XLSX.utils.json_to_sheet(leaves.map(l=>{
+    const s=students.find(st=>st.admissionNo===l.studentNo);
+    return {AdmissionNo:s.admissionNo,Name:s.name,From:l.from,To:l.to,Reason:l.reason,Parent:l.parentName};
+  }));
+  XLSX.utils.book_append_sheet(wb,leaveSheet,"Leaves");
+  const ttSheet=XLSX.utils.json_to_sheet(timetable);
+  XLSX.utils.book_append_sheet(wb,ttSheet,"Timetable");
+  XLSX.writeFile(wb,"JNV_Kathua_Data.xlsx");
+}
+// After successful login, show/hide Excel button based on role
+function login(){
+  const email=document.getElementById("email").value;
+  const pass=document.getElementById("password").value;
+  const user=users.find(u=>u.email===email && u.password===pass);
+  if(!user){alert("Invalid credentials");return;}
+  currentUserRole=user.role;
+  if(user.admissionNo) currentStudent=user.admissionNo;
+  document.getElementById("loginContainer").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+  
+  // Show/hide upload Excel only for Teacher1
+  if(currentUserRole==="teacher1") document.getElementById("uploadExcel").style.display="block";
+  else document.getElementById("uploadExcel").style.display="none";
+
+  // Show/hide Export Excel only for Teacher1 and Teacher2
+  const exportBtn = document.querySelector("button[onclick='downloadExcel()']");
+  if(currentUserRole==="teacher1" || currentUserRole==="teacher2") exportBtn.style.display="inline-block";
+  else exportBtn.style.display="none";
+
+  loadCards();
+  displayLeaveHistory();
+  displayTimetable();
+  showSection("students");
+}
+
+// You can reuse all previous JS functions for:
+// loadCards(), filterStudents(), searchLeaveStudent(), applyLeave(), displayLeaveHistory(), getLeaveCount(), addTimetable(), displayTimetable(), uploadExcel(), downloadExcel(), showSection(), logout()
+
+</script>
+</body>
+</html>
