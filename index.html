@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JNV Kathua Student Management</title>
+<title>JNV Basohli Student Management</title>
 <style>
 body{
   font-family:Arial,sans-serif;
@@ -120,7 +120,7 @@ th,td{padding:5px;text-align:left;border:1px solid #0ff;font-size:0.9rem;}
 
 
 <div id="loginContainer">
-  <h1>JNV Kathua Student Management</h1>
+  <h1>JNV Basohli Student Management</h1>
   <h3>Developed by Sankalp Sir</h3>
   <input type="text" id="email" placeholder="Email / Admission No"><br>
   <input type="password" id="password" placeholder="Password"><br>
@@ -143,12 +143,10 @@ th,td{padding:5px;text-align:left;border:1px solid #0ff;font-size:0.9rem;}
     <input type="text" id="studentSearch" placeholder="Search by name or admission no" onkeyup="filterStudents()"><br>
     <select id="hostelFilter" onchange="filterStudents()">
       <option value="">All Hostels</option>
-      <option value="Tagore">Tagore</option>
-      <option value="Nehru">Nehru</option>
-      <option value="Gandhi">Gandhi</option>
-      <option value="Patel">Patel</option>
-      <option value="Vivekananda">Vivekananda</option>
-      <option value="Raman">Raman</option>
+      <option value="Arvali">Arvali</option>
+      <option value="Nilgiri">Nilgiri</option>
+      <option value="Shivalik">Shivalik</option>
+      <option value="Udaigiri">Udaigiri</option>
     </select>
     <select id="houseFilter" onchange="filterStudents()">
       <option value="">All Houses</option>
@@ -219,13 +217,13 @@ const users=[
 let currentUserRole="",currentStudent="";
 
 let students=[
-  {admissionNo:"JNVT001",name:"Aayush Singh",class:"12-A",hostel:"Tagore",house:"Blue",phone:"9876543210",email:"aayush@gmail.com",img:"",fatherName:"Mr. Singh",motherName:"Mrs. Singh",address:"Kathua, J&K"},
-  {admissionNo:"JNVT002",name:"Rohan Sharma",class:"12-B",hostel:"Nehru",house:"Red",phone:"9876543211",email:"rohan@gmail.com",img:"",fatherName:"Mr. Sharma",motherName:"Mrs. Sharma",address:"Kathua, J&K"},
-  {admissionNo:"JNVT003",name:"Priya Verma",class:"11-A",hostel:"Gandhi",house:"Green",phone:"9876543212",email:"priya@gmail.com",img:"",fatherName:"Mr. Verma",motherName:"Mrs. Verma",address:"Kathua, J&K"},
-  {admissionNo:"JNVT004",name:"Anjali Gupta",class:"10-A",hostel:"Patel",house:"Yellow",phone:"9876543213",email:"anjali@gmail.com",img:"",fatherName:"Mr. Gupta",motherName:"Mrs. Gupta",address:"Kathua, J&K"},
-  {admissionNo:"JNVT005",name:"Manish Yadav",class:"9-B",hostel:"Vivekananda",house:"Blue",phone:"9876543214",email:"manish@gmail.com",img:"",fatherName:"Mr. Yadav",motherName:"Mrs. Yadav",address:"Kathua, J&K"},
-  {admissionNo:"JNVT006",name:"Sakshi Chauhan",class:"8-A",hostel:"Raman",house:"Red",phone:"9876543215",email:"sakshi@gmail.com",img:"",fatherName:"Mr. Chauhan",motherName:"Mrs. Chauhan",address:"Kathua, J&K"},
-  {admissionNo:"JNVT007",name:"Ravi Kumar",class:"7-A",hostel:"Tagore",house:"Green",phone:"9876543216",email:"ravi@gmail.com",img:"",fatherName:"Mr. Kumar",motherName:"Mrs. Kumar",address:"Kathua, J&K"}
+  {admissionNo:"JNVT001",name:"Aayush Singh",class:"12-A",hostel:"Nilgiri",house:"Blue",phone:"9876543210",email:"aayush@gmail.com",img:"",fatherName:"Mr. Singh",motherName:"Mrs. Singh",address:"Kathua, J&K"},
+  {admissionNo:"JNVT002",name:"Rohan Sharma",class:"12-B",hostel:"Shivalik",house:"Red",phone:"9876543211",email:"rohan@gmail.com",img:"",fatherName:"Mr. Sharma",motherName:"Mrs. Sharma",address:"Kathua, J&K"},
+  {admissionNo:"JNVT003",name:"Priya Verma",class:"11-A",hostel:"Udaigiri",house:"Green",phone:"9876543212",email:"priya@gmail.com",img:"",fatherName:"Mr. Verma",motherName:"Mrs. Verma",address:"Kathua, J&K"},
+  {admissionNo:"JNVT004",name:"Anjali Gupta",class:"10-A",hostel:"Aravali",house:"Yellow",phone:"9876543213",email:"anjali@gmail.com",img:"",fatherName:"Mr. Gupta",motherName:"Mrs. Gupta",address:"Kathua, J&K"},
+  {admissionNo:"JNVT005",name:"Manish Yadav",class:"9-B",hostel:"Nilgiri",house:"Blue",phone:"9876543214",email:"manish@gmail.com",img:"",fatherName:"Mr. Yadav",motherName:"Mrs. Yadav",address:"Kathua, J&K"},
+  {admissionNo:"JNVT006",name:"Sakshi Chauhan",class:"8-A",hostel:"Udaigiri",house:"Red",phone:"9876543215",email:"sakshi@gmail.com",img:"",fatherName:"Mr. Chauhan",motherName:"Mrs. Chauhan",address:"Kathua, J&K"},
+  {admissionNo:"JNVT007",name:"Ravi Kumar",class:"7-A",hostel:"Aravali",house:"Green",phone:"9876543216",email:"ravi@gmail.com",img:"",fatherName:"Mr. Kumar",motherName:"Mrs. Kumar",address:"Kathua, J&K"}
 ];
 
 let leaves=JSON.parse(localStorage.getItem("leaves")||"[]");
@@ -592,6 +590,7 @@ function downloadTimetable(){
 </script>
 </body>
 </html>
+
 
 
 
