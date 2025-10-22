@@ -29,7 +29,8 @@ table{width:100%;border-collapse:collapse;margin-top:10px;}
 th,td{padding:5px;text-align:left;border:1px solid #0ff;font-size:0.9rem;}
 @media screen and (max-width:768px){.card{width:90%;}input,select,button{width:90%; margin:5px 0;}table,th,td{font-size:0.8rem;}}
 #developer{color:#0ff;margin-top:10px;text-shadow:0 0 5px #0ff;}
- #menuButtons button.verification-btn {
+/* Style only for the Student Verification Card button */
+#menuButtons button.verification-btn {
   background: linear-gradient(90deg, #00c6ff, #0072ff);
   color: white;
   border: none;
@@ -49,9 +50,7 @@ th,td{padding:5px;text-align:left;border:1px solid #0ff;font-size:0.9rem;}
   box-shadow: 0 0 20px rgba(0, 255, 255, 0.8), 0 0 40px rgba(0, 255, 255, 0.4);
   transform: scale(1.05);
 }
-/* Style only for the Student Verification Card button */
 
-  
 </style>
 </head>
 <body>
@@ -69,16 +68,24 @@ th,td{padding:5px;text-align:left;border:1px solid #0ff;font-size:0.9rem;}
 
 <div id="dashboard" class="container" style="display:none;">
   <h2>Dashboard</h2>
-  
-  <button onclick="showSection('students')">Students</button>
-  <button onclick="showSection('leaveManagement')">Leave Management</button>
-  <button onclick="showSection('timetable')">Timetable</button>
-  <button onclick="showSection('hostelTasks')">Hostel Tasks</button>
-  <button onclick="window.open('https://aayushsing.github.io/Student-Verification-System/', '_blank')">Student Verification Card</button>
-  <input type="file" id="uploadExcel" style="display:none" onchange="uploadExcel(event)">
-  <button id="uploadBtn" onclick="document.getElementById('uploadExcel').click()">Upload Students Excel</button>
-  <button onclick="downloadExcel()" id="exportBtn">Export Excel</button>
-  <button onclick="logout()">Logout</button>
+  <!-- Collapsible Sidebar Menu -->
+<div id="sidebarMenu">
+  <div id="menuToggle" onclick="toggleMenu()">☰ Menu</div>
+  <div id="menuButtons">
+    <button onclick="showSection('students')">Students</button>
+    <button onclick="showSection('leaveManagement')">Leave Management</button>
+    <button onclick="showSection('timetable')">Timetable</button>
+    <button onclick="showSection('hostelTasks')">Hostel Tasks</button>
+    <button onclick="window.open('https://aayushsing.github.io/Student-Verification-System/', '_blank')">Student Verification Card</button>
+    <input type="file" id="uploadExcel" style="display:none" onchange="uploadExcel(event)">
+    <button id="uploadBtn" onclick="document.getElementById('uploadExcel').click()">Upload Students Excel</button>
+    <button onclick="downloadExcel()" id="exportBtn">Export Excel</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</div>
+
+
+
   <!-- Students -->
   <div id="students" class="section">
     <h3>Students</h3>
@@ -492,65 +499,55 @@ function applyRoleRestrictions() {
     const hmBtn = document.querySelector("button[onclick=\"showSection('hostelTasks')\"]");
     const uploadBtn = document.getElementById("uploadBtn");
     const exportBtn = document.getElementById("exportBtn");
-    const verificationBtn = document.getElementById("verificationBtn"); // 🔹 New button
 
-    // Hide all by default (to prevent flash before role check)
-    verificationBtn.style.display = "none";
-
-    if (currentUserRole === "student" || currentUserRole === "parent") {
-        // 🔹 Students & parents: can only see own profile
-        studentsBtn.style.display = "inline-block";
+    if(currentUserRole === "student" || currentUserRole === "parent") {
+        // Students & parents: can only see own profile
+        studentsBtn.style.display = "inline-block";  // show only Students section
         leaveBtn.style.display = "none";
         ttBtn.style.display = "none";
         hmBtn.style.display = "none";
         uploadBtn.style.display = "none";
         exportBtn.style.display = "none";
-        verificationBtn.style.display = "none";
 
-        // Hide all other sections
+        // Hide all sections except students
         document.getElementById("leaveManagement").style.display = "none";
         document.getElementById("timetable").style.display = "none";
         document.getElementById("hostelTasks").style.display = "none";
-        const svc = document.getElementById("StudentVerificationCard");
-        if (svc) svc.style.display = "none";
     }
-
-    else if (currentUserRole === "teacher1") {
-        // 🔹 Teacher 1: Full access to leave, hostel, upload, and verification card
+    else if(currentUserRole === "teacher1") {
+        // Teacher1: full access to leave & hostel management
         studentsBtn.style.display = "inline-block";
         leaveBtn.style.display = "inline-block";
-        ttBtn.style.display = "none";  // timetable handled by Teacher 2
+        ttBtn.style.display = "none";  // timetable managed by Teacher2
         hmBtn.style.display = "inline-block";
         uploadBtn.style.display = "inline-block";
         exportBtn.style.display = "inline-block";
-
-        // 🔹 Show only for Sankalp Sir
-        const currentUser = localStorage.getItem("username");
-        if (currentUser === "Sankalp") {
-            verificationBtn.style.display = "inline-block";
-        } else {
-            verificationBtn.style.display = "none";
-        }
+         
     }
-
-    else if (currentUserRole === "teacher2") {
-        // 🔹 Teacher 2: Only timetable & export
+    else if(currentUserRole === "teacher2") {
+        // Teacher2: only timetable & export
         studentsBtn.style.display = "inline-block";
         leaveBtn.style.display = "none";
         ttBtn.style.display = "inline-block";
         hmBtn.style.display = "none";
         uploadBtn.style.display = "none";
         exportBtn.style.display = "inline-block";
-        verificationBtn.style.display = "none";
     }
+}
+
+// Example: role is stored in localStorage after login
+const currentRole = localStorage.getItem("role");  // "teacher1", "teacher2", "student", "parent"
+
+const verificationBtn = document.getElementById("verificationBtn");
+
+// Show only for Teacher 1
+if (currentRole === "teacher1") {
+  verificationBtn.style.display = "block";
+} else {
+  verificationBtn.style.display = "none";
 }
 
 
 </script>
 </body>
 </html>
-
-
-
-
-
