@@ -1,1 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JNV Basohli Student Management</title>
+<style>
+body{font-family:Arial,sans-serif;background:#111;color:#fff;margin:0;padding:0;}
+#loginContainer{display:flex;justify-content:center;align-items:center;height:100vh;background:url('jnv2.png') no-repeat center center/cover;flex-direction:column;text-align:center;}
+#loginContainer h1{color:#0ff;text-shadow:0 0 10px #0ff;}
+.container{padding:20px;}
+input,select,button{padding:8px;margin:5px;border-radius:5px;border:none;outline:none;font-size:1rem;}
+button{cursor:pointer;background:linear-gradient(45deg,#ff00ff,#00ffff);color:#fff;font-weight:bold;box-shadow:0 0 10px #ff00ff,0 0 20px #00ffff;transition:0.3s;}
+button:hover{transform:scale(1.05);}
+.card{background:#222;margin:10px;padding:15px;border-radius:10px;box-shadow:0 0 15px #ff00ff,0 0 30px #00ffff;width:250px;display:inline-block;vertical-align:top;transition:0.3s;}
+.logo{position:fixed;width:70px;height:70px;border-radius:50%;overflow:hidden;z-index:999;box-shadow:0 0 25px rgba(0,255,255,0.8), inset 0 0 10px rgba(255,255,255,0.4);background:linear-gradient(145deg,#0ff,#005);animation:float 5s ease-in-out infinite;display:flex;justify-content:center;align-items:center;border:2px solid rgba(255,255,255,0.6);}
+@keyframes float{0%,100%{transform:translateY(0px) rotateY(0deg);}50%{transform:translateY(-10px) rotateY(360deg);}}
+.logo img{width:60px;height:60px;border-radius:50%;object-fit:cover;}
+.logo-top-left{top:15px;left:15px;}
+.logo-top-right{top:15px;right:15px;}
+.logo-bottom-left{bottom:15px;left:15px;}
+.logo-bottom-right{bottom:15px;right:15px;}
+.logo:hover{transform:scale(1.1);box-shadow:0 0 35px rgba(0,255,255,1);}
+.card img{width:80px;height:80px;border-radius:50%;object-fit:cover;margin-bottom:10px;box-shadow:0 0 5px #0ff;}
+h3{margin:5px 0;}
+.section{display:none;}
+#studentCards{display:flex;flex-wrap:wrap;justify-content:center;}
+table{width:100%;border-collapse:collapse;margin-top:10px;}
+th,td{padding:5px;text-align:left;border:1px solid #0ff;font-size:0.9rem;}
+@media screen and (max-width:768px){.card{width:90%;}input,select,button{width:90%; margin:5px 0;}table,th,td{font-size:0.8rem;}}
+#developer{color:#0ff;margin-top:10px;text-shadow:0 0 5px #0ff;}
+</style>
+</head>
+<body>
+
+<!-- Logos -->
+<div class="logo logo-top-right"><img src="jnv image.jpg" alt="jnv2.png"></div>
+
+<div id="loginContainer">
+  <h1>JNV Basohli Student Management</h1>
+  <h3>Developed by Sankalp Sir</h3>
+  <input type="text" id="email" placeholder="Email / Admission No"><br>
+  <input type="password" id="password" placeholder="Password"><br>
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="dashboard" class="container" style="display:none;">
+  <h2>Dashboard</h2>
+  
+  <button onclick="showSection('students')">Students</button>
+  <button onclick="showSection('leaveManagement')">Leave Management</button>
+  <button onclick="showSection('timetable')">Timetable</button>
+  <button onclick="showSection('hostelTasks')">Hostel Tasks</button>
+  <input type="file" id="uploadExcel" style="display:none" onchange="uploadExcel(event)">
+  <button id="uploadBtn" onclick="document.getElementById('uploadExcel').click()">Upload Students Excel</button>
+  <button onclick="downloadExcel()" id="exportBtn">Export Excel</button>
+  <button onclick="logout()">Logout</button>
+
+
+  <!-- Students -->
+  <div id="students" class="section">
+    <h3>Students</h3>
+    <input type="text" id="studentSearch" placeholder="Search by name or admission no" onkeyup="filterStudents()"><br>
+    <select id="hostelFilter" onchange="filterStudents()">
+      <option value="">All Hostels</option>
+      <option value="Arvali">Arvali</option>
+      <option value="Nilgiri">Nilgiri</option>
+      <option value="Shivalik">Shivalik</option>
+      <option value="Udaigiri">Udaigiri</option>
+    </select>
+    <select id="houseFilter" onchange="filterStudents()">
+      <option value="">All Houses</option>
+      <option value="Blue">Blue</option>
+      <option value="Red">Red</option>
+      <option value="Green">Green</option>
+      <option value="Yellow">Yellow</option>
+    </select>
+    <div id="studentCards"></div>
+  </div>
+
+  <!-- Leave Management -->
+  <div id="leaveManagement" class="section">
+    <h3>Leave Management</h3>
+    <input type="text" id="leaveSearchInput" placeholder="Search student by Admission No or Name" onkeyup="searchLeaveStudent()"><br>
+    <select id="leaveStudent"></select><br>
+    <label><input type="radio" name="leaveType" value="partial" checked> Partial Leave</label>
+    <label><input type="radio" name="leaveType" value="full"> Full Day Leave</label><br>
+    <input type="date" id="leaveFrom">
+    <input type="date" id="leaveTo"><br>
+    <input type="text" id="leaveReason" placeholder="Reason"><br>
+    <input type="text" id="leaveParent" placeholder="Parent Name"><br>
+    <button onclick="applyLeave()">Apply Leave</button>
+    <button onclick="downloadLeaveHistory()">Download Leave History</button>
+    <h4>Leave History</h4>
+    <table id="leaveHistory"></table>
+  </div>
+
+  <!-- Timetable -->
+  <div id="timetable" class="section">
+    <h3>Timetable</h3>
+    <select id="ttClass">
+      <option value="6-A">6-A</option>
+      <option value="6-B">6-B</option>
+      <option value="7-A">7-A</option>
+      <option value="7-B">7-B</option>
+      <option value="8-A">8-A</option>
+      <option value="8-B">8-B</option>
+      <option value="9-A">9-A</option>
+      <option value="9-B">9-B</option>
+      <option value="10-A">10-A</option>
+      <option value="10-B">10-B</option>
+      <option value="11-A">11-A</option>
+      <option value="11-B">11-B</option>
+      <option value="12-A">12-A</option>
+      <option value="12-B">12-B</option>
+    </select>
+    <input type="date" id="ttDate">
+    <input type="time" id="ttTime">
+    <input type="text" id="ttTopic" placeholder="Topic">
+    <input type="text" id="ttTeacher" placeholder="Teacher Name">
+    <button onclick="addTimetable()">Add</button>
+    <button onclick="downloadTimetable()">Download Timetable</button>
+    <table id="timetableTable"></table>
+  </div>
+
+  <!-- Hostel Tasks -->
+  <div id="hostelTasks" class="section">
+    <h3>Hostel Tasks Management</h3>
+    <select id="taskHostel">
+      <option value="Arvali">Arvali</option>
+      <option value="Nilgiri">Nilgiri</option>
+      <option value="Shivalik">Shivalik</option>
+      <option value="Udaigiri">Udaigiri</option>
+    </select><br>
+    <input type="date" id="taskDate">
+    <input type="text" id="taskDesc" placeholder="Task Description">
+    <button onclick="addTask()">Add Task</button>
+    <button onclick="downloadTasks()">Download Tasks Excel</button>
+    <table id="taskTable"></table>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const users=[
+  {email:"sankalp@gmail.com",password:"1234",role:"teacher1"},
+  {email:"kalyani@gmail.com",password:"98745",role:"teacher2"},
+  {email:"student@gmail.com",password:"1234",role:"student",admissionNo:"JNVT001"},
+  {email:"parent@gmail.com",password:"1234",role:"parent",admissionNo:"JNVT001"}
+];
+
+let currentUserRole="",currentStudent="";
+let students=[
+  {admissionNo:"JNVT001",name:"Aayush Singh",class:"12-A",hostel:"Nilgiri",house:"Blue",phone:"9876543210",email:"aayush@gmail.com",img:"",fatherName:"Mr. Singh",motherName:"Mrs. Singh",address:"Kathua, J&K"},
+  {admissionNo:"JNVT002",name:"Rohan Sharma",class:"12-B",hostel:"Shivalik",house:"Red",phone:"9876543211",email:"rohan@gmail.com",img:"",fatherName:"Mr. Sharma",motherName:"Mrs. Sharma",address:"Kathua, J&K"},
+  {admissionNo:"JNVT003",name:"Priya Verma",class:"11-A",hostel:"Udaigiri",house:"Green",phone:"9876543212",email:"priya@gmail.com",img:"",fatherName:"Mr. Verma",motherName:"Mrs. Verma",address:"Kathua, J&K"},
+  {admissionNo:"JNVT004",name:"Anjali Gupta",class:"10-A",hostel:"Arvali",house:"Yellow",phone:"9876543213",email:"anjali@gmail.com",img:"",fatherName:"Mr. Gupta",motherName:"Mrs. Gupta",address:"Kathua, J&K"},
+  {admissionNo:"JNVT005",name:"Manish Yadav",class:"9-B",hostel:"Nilgiri",house:"Blue",phone:"9876543214",email:"manish@gmail.com",img:"",fatherName:"Mr. Yadav",motherName:"Mrs. Yadav",address:"Kathua, J&K"},
+  {admissionNo:"JNVT006",name:"Sakshi Chauhan",class:"8-A",hostel:"Udaigiri",house:"Red",phone:"9876543215",email:"sakshi@gmail.com",img:"",fatherName:"Mr. Chauhan",motherName:"Mrs. Chauhan",address:"Kathua, J&K"},
+  {admissionNo:"JNVT007",name:"Ravi Kumar",class:"7-A",hostel:"Arvali",house:"Green",phone:"9876543216",email:"ravi@gmail.com",img:"",fatherName:"Mr. Kumar",motherName:"Mrs. Kumar",address:"Kathua, J&K"}
+];
+let leaves=JSON.parse(localStorage.getItem("leaves")||"[]");
+let timetable=JSON.parse(localStorage.getItem("timetable")||"[]");
+let tasks=JSON.parse(localStorage.getItem("tasks")||"[]");
+
+// Login
+function login() {
+    const email = document.getElementById("email").value;
+    const pass = document.getElementById("password").value;
+    const user = users.find(u => u.email === email && u.password === pass);
+    if (!user) { alert("Invalid credentials"); return; }
+
+    currentUserRole = user.role;
+    if (user.admissionNo) currentStudent = user.admissionNo;
+
+    document.getElementById("loginContainer").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+
+    applyRoleRestrictions(); // Apply role-based button visibility
+
+    loadCards();
+    displayLeaveHistory();
+    displayTimetable();
+    showSection("students");
+}
+
+// Dashboard Student Cards
+function loadCards(){
+  const sContainer=document.getElementById("studentCards");
+  const leaveSelect=document.getElementById("leaveStudent");
+  sContainer.innerHTML=""; 
+  leaveSelect.innerHTML="";
+  
+  students.forEach(s=>{
+    if((currentUserRole==="student"||currentUserRole==="parent") && s.admissionNo!==currentStudent) return;
+
+    // Count leaves by type
+    const partialCount = leaves.filter(l => l.admissionNo === s.admissionNo && l.type === "partial").length;
+    const fullCount = leaves.filter(l => l.admissionNo === s.admissionNo && l.type === "full").length;
+
+    sContainer.innerHTML+=`<div class="card">
+      <img src="${s.img}" alt="${s.name}">
+      <h3>${s.name}</h3>
+      <p>Admission No: ${s.admissionNo}</p>
+      <p>Class: ${s.class}</p>
+      <p>Hostel: ${s.hostel}</p>
+      <p>House: ${s.house}</p>
+      <p>Phone: ${s.phone}</p>
+      <p>Father: ${s.fatherName}</p>
+      <p>Mother: ${s.motherName}</p>
+      <p>Address: ${s.address}</p>
+      <p>Partial Leaves: ${partialCount}</p>
+      <p>Full Day Leaves: ${fullCount}</p>
+      ${currentUserRole==="teacher1"?`<button onclick="downloadStudentLeave('${s.admissionNo}')">Download Leaves</button>`:""}
+    </div>`;
+
+    if(currentUserRole==="teacher1") leaveSelect.innerHTML+=`<option value="${s.admissionNo}">${s.name} (${s.admissionNo})</option>`;
+  });
+}
+
+
+// Student Search Dashboard
+function filterStudents(){
+  const val=document.getElementById("studentSearch").value.toLowerCase();
+  const hostel=document.getElementById("hostelFilter").value;
+  const house=document.getElementById("houseFilter").value;
+  const sContainer=document.getElementById("studentCards");
+  sContainer.innerHTML="";
+  students.forEach(s=>{
+    if((currentUserRole==="student"||currentUserRole==="parent") && s.admissionNo!==currentStudent) return;
+    if(hostel && s.hostel!==hostel) return;
+    if(house && s.house!==house) return;
+    if(s.name.toLowerCase().includes(val) || s.admissionNo.toLowerCase().includes(val)){
+      sContainer.innerHTML+=`<div class="card">
+        <img src="${s.img}" alt="${s.name}">
+        <h3>${s.name}</h3>
+        <p>Admission No: ${s.admissionNo}</p>
+        <p>Class: ${s.class}</p>
+        <p>Hostel: ${s.hostel}</p>
+        <p>House: ${s.house}</p>
+        <p>Phone: ${s.phone}</p>
+        <p>Father: ${s.fatherName}</p>
+        <p>Mother: ${s.motherName}</p>
+        <p>Address: ${s.address}</p>
+        <p>Total Leaves: ${leaves.filter(l=>l.admissionNo===s.admissionNo).length}</p>
+        ${currentUserRole==="teacher1"?`<button onclick="downloadStudentLeave('${s.admissionNo}')">Download Leaves</button>`:""}
+      </div>`;
+    }
+  });
+}
+
+// Leave Management
+function searchLeaveStudent(){
+  const val=document.getElementById("leaveSearchInput").value.toLowerCase();
+  const leaveSelect=document.getElementById("leaveStudent");
+  leaveSelect.innerHTML="";
+  students.filter(s=>s.name.toLowerCase().includes(val)||s.admissionNo.toLowerCase().includes(val))
+          .forEach(s=>leaveSelect.innerHTML+=`<option value="${s.admissionNo}">${s.name} (${s.admissionNo})</option>`);
+}
+
+function applyLeave(){
+  const admissionNo=document.getElementById("leaveStudent").value;
+  const type=document.querySelector('input[name="leaveType"]:checked').value;
+  const from=document.getElementById("leaveFrom").value;
+  const to=document.getElementById("leaveTo").value;
+  const reason=document.getElementById("leaveReason").value;
+  const parent=document.getElementById("leaveParent").value;
+  if(!admissionNo||!from||!to) {alert("Fill all fields");return;}
+  leaves.push({admissionNo,type,from,to,reason,parent,date:new Date().toLocaleDateString()});
+  localStorage.setItem("leaves",JSON.stringify(leaves));
+  displayLeaveHistory();
+  loadCards();
+}
+
+function displayLeaveHistory(){
+  const table=document.getElementById("leaveHistory");
+  table.innerHTML="<tr><th>Admission No</th><th>Type</th><th>From</th><th>To</th><th>Reason</th><th>Parent</th><th>Date Applied</th>";
+  if(currentUserRole==="teacher1") table.innerHTML+="<th>Action</th>";
+  table.innerHTML+="</tr>";
+  leaves.forEach((l,index)=>{
+    if((currentUserRole==="student"||currentUserRole==="parent") && l.admissionNo!==currentStudent) return;
+    table.innerHTML+=`<tr>
+      <td>${l.admissionNo}</td>
+      <td>${l.type}</td>
+      <td>${l.from}</td>
+      <td>${l.to}</td>
+      <td>${l.reason}</td>
+      <td>${l.parent}</td>
+      <td>${l.date}</td>
+      ${currentUserRole==="teacher1"?`<td><button onclick="deleteLeave(${index})">Delete</button></td>`:""}
+    </tr>`;
+  });
+}
+
+function deleteLeave(index){
+  if(confirm("Delete this leave record?")){
+    leaves.splice(index,1);
+    localStorage.setItem("leaves",JSON.stringify(leaves));
+    displayLeaveHistory();
+    loadCards();
+  }
+}
+
+function downloadLeaveHistory(){
+  let wb=XLSX.utils.book_new();
+  let ws=XLSX.utils.json_to_sheet(leaves);
+  XLSX.utils.book_append_sheet(wb,ws,"Leaves");
+  XLSX.writeFile(wb,"LeaveHistory.xlsx");
+}
+
+function downloadStudentLeave(admissionNo){
+  const sLeaves=leaves.filter(l=>l.admissionNo===admissionNo);
+  let wb=XLSX.utils.book_new();
+  let ws=XLSX.utils.json_to_sheet(sLeaves);
+  XLSX.utils.book_append_sheet(wb,ws,"Leaves");
+  XLSX.writeFile(wb,`Leaves_${admissionNo}.xlsx`);
+}
+
+// Hostel Tasks
+function addTask(){
+  const hostel=document.getElementById("taskHostel").value;
+  const date=document.getElementById("taskDate").value;
+  const desc=document.getElementById("taskDesc").value;
+  if(!hostel||!date||!desc){alert("Fill all fields");return;}
+  tasks.push({hostel,date,desc});
+  localStorage.setItem("tasks",JSON.stringify(tasks));
+  displayTasks();
+}
+
+function displayTasks(){
+  const table=document.getElementById("taskTable");
+  table.innerHTML="<tr><th>Hostel</th><th>Date</th><th>Task</th>";
+  if(currentUserRole==="teacher1") table.innerHTML+="<th>Action</th>";
+  table.innerHTML+="</tr>";
+  tasks.forEach((t,index)=>{
+    table.innerHTML+=`<tr>
+      <td>${t.hostel}</td>
+      <td>${t.date}</td>
+      <td>${t.desc}</td>
+      ${currentUserRole==="teacher1"?`<td><button onclick="deleteTask(${index})">Delete</button></td>`:""}
+    </tr>`;
+  });
+}
+
+function deleteTask(index){
+  if(confirm("Delete this task?")){
+    tasks.splice(index,1);
+    localStorage.setItem("tasks",JSON.stringify(tasks));
+    displayTasks();
+  }
+}
+
+function downloadTasks(){
+  let wb=XLSX.utils.book_new();
+  let ws=XLSX.utils.json_to_sheet(tasks);
+  XLSX.utils.book_append_sheet(wb,ws,"Tasks");
+  XLSX.writeFile(wb,"HostelTasks.xlsx");
+}
+
+// Timetable
+// Add Timetable Entry (Teacher2 only)
+function addTimetable(){
+  if(currentUserRole !== "teacher2"){ 
+    alert("Only Teacher2 can add timetable"); 
+    return; 
+  }
+  const cls = document.getElementById("ttClass").value;
+  const date = document.getElementById("ttDate").value;
+  const time = document.getElementById("ttTime").value;
+  const topic = document.getElementById("ttTopic").value;
+  const teacher = document.getElementById("ttTeacher").value;
+  if(!date || !time || !topic || !teacher){ alert("Fill all fields"); return; }
+  timetable.push({cls, date, time, topic, teacher});
+  localStorage.setItem("timetable", JSON.stringify(timetable));
+  displayTimetable();
+}
+
+// Display Timetable
+function displayTimetable(){
+  const table = document.getElementById("timetableTable");
+  table.innerHTML = `<tr><th>Class</th><th>Date</th><th>Time</th><th>Topic</th><th>Teacher</th><th>Action</th></tr>`;
+  timetable.forEach((t,i)=>{
+    table.innerHTML += `<tr>
+      <td>${t.cls}</td>
+      <td>${t.date}</td>
+      <td>${t.time}</td>
+      <td>${t.topic}</td>
+      <td>${t.teacher}</td>
+      <td>${currentUserRole==="teacher2"?`<button onclick="deleteTimetable(${i})">Delete</button>`:"-"}</td>
+    </tr>`;
+  });
+}
+
+// Delete timetable entry
+function deleteTimetable(index){
+  if(currentUserRole !== "teacher2"){ 
+    alert("Only Teacher2 can delete timetable"); 
+    return; 
+  }
+  if(!confirm("Are you sure you want to delete this timetable entry?")) return;
+  timetable.splice(index,1);
+  localStorage.setItem("timetable", JSON.stringify(timetable));
+  displayTimetable();
+}
+
+
+function downloadTimetable(){
+  let wb=XLSX.utils.book_new();
+  let ws=XLSX.utils.json_to_sheet(timetable);
+  XLSX.utils.book_append_sheet(wb,ws,"Timetable");
+  XLSX.writeFile(wb,"Timetable.xlsx");
+}
+
+// Sections
+function showSection(id){
+  document.querySelectorAll(".section").forEach(s=>s.style.display="none");
+  document.getElementById(id).style.display="block";
+}
+
+// Logout
+function logout(){location.reload();}
+
+// Excel Upload
+function uploadExcel(event){
+  const file=event.target.files[0];
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const data=new Uint8Array(e.target.result);
+    const wb=XLSX.read(data,{type:"array"});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const excelData=XLSX.utils.sheet_to_json(ws);
+    excelData.forEach(s=>students.push(s));
+    loadCards();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Export Excel
+function downloadExcel(){
+  let wb=XLSX.utils.book_new();
+  let ws=XLSX.utils.json_to_sheet(students);
+  XLSX.utils.book_append_sheet(wb,ws,"Students");
+  XLSX.writeFile(wb,"Students.xlsx");
+}
+function loadDashboard(){
+  if(currentUserRole==="student" || currentUserRole==="parent"){
+    document.getElementById("uploadBtn").style.display="none";
+    document.getElementById("exportBtn").style.display="none";
+    document.querySelectorAll("#dashboard button").forEach(btn=>{
+      if(btn.innerText !== "Logout") btn.style.display="none";
+    });
+  } else if(currentUserRole==="teacher1"){
+    document.getElementById("uploadBtn").style.display="inline-block";
+    document.getElementById("exportBtn").style.display="inline-block";
+  } else if(currentUserRole==="teacher2"){
+    document.getElementById("uploadBtn").style.display="none";
+    document.getElementById("exportBtn").style.display="inline-block";
+  }
+}
+students.forEach(s=>{
+  // If student/parent, show only their own
+  if((currentUserRole==="student" || currentUserRole==="parent") && s.admissionNo!==currentStudent) return;
+
+  // render card
+});
+function applyRoleRestrictions() {
+    const studentsBtn = document.querySelector("button[onclick=\"showSection('students')\"]");
+    const leaveBtn = document.querySelector("button[onclick=\"showSection('leaveManagement')\"]");
+    const ttBtn = document.querySelector("button[onclick=\"showSection('timetable')\"]");
+    const hmBtn = document.querySelector("button[onclick=\"showSection('hostelTasks')\"]");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const exportBtn = document.getElementById("exportBtn");
+
+    if(currentUserRole === "student" || currentUserRole === "parent") {
+        // Students & parents: can only see own profile
+        studentsBtn.style.display = "inline-block";  // show only Students section
+        leaveBtn.style.display = "none";
+        ttBtn.style.display = "none";
+        hmBtn.style.display = "none";
+        uploadBtn.style.display = "none";
+        exportBtn.style.display = "none";
+
+        // Hide all sections except students
+        document.getElementById("leaveManagement").style.display = "none";
+        document.getElementById("timetable").style.display = "none";
+        document.getElementById("hostelTasks").style.display = "none";
+    }
+    else if(currentUserRole === "teacher1") {
+        // Teacher1: full access to leave & hostel management
+        studentsBtn.style.display = "inline-block";
+        leaveBtn.style.display = "inline-block";
+        ttBtn.style.display = "none";  // timetable managed by Teacher2
+        hmBtn.style.display = "inline-block";
+        uploadBtn.style.display = "inline-block";
+        exportBtn.style.display = "inline-block";
+    }
+    else if(currentUserRole === "teacher2") {
+        // Teacher2: only timetable & export
+        studentsBtn.style.display = "inline-block";
+        leaveBtn.style.display = "none";
+        ttBtn.style.display = "inline-block";
+        hmBtn.style.display = "none";
+        uploadBtn.style.display = "none";
+        exportBtn.style.display = "inline-block";
+    }
+}
+
+</script>
+</body>
+</html>
+
 
