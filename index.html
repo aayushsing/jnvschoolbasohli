@@ -164,6 +164,59 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
 @media (max-width: 560px){
   .kv{grid-template-columns:82px 1fr}
 }
+/* --- Logo: smaller & circular --- */
+.appbar .logo,
+.login-card .logo,
+.logo{
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+}
+.appbar .logo img,
+.login-card .logo img,
+.logo img{
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+}
+
+/* --- App bar title: prevent overflow on mobile --- */
+.appbar h1{
+  font-size: .98rem; 
+  margin: 0; 
+  font-weight: 700; 
+  letter-spacing: .2px;
+  max-width: 55vw;           /* keep it from pushing controls off-screen */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Mobile fit & readability tweaks --- */
+@media (max-width: 480px){
+  .container{ padding: 12px; }
+  .appbar{ padding: 8px 10px; }
+  .appbar h1{ font-size: .9rem; max-width: 52vw; }
+  .menu-btn{ padding: 6px 8px; font-size: .9rem; }
+  .badge{ font-size: .7rem; padding: 3px 7px; }
+  
+  .login-card{ width: 95vw; padding: 16px 14px; }
+  .login-card h2{ font-size: 1rem; line-height: 1.2; }
+  input, select, button{ font-size: .9rem; padding: 9px 10px; }
+  
+  /* Cards compress a bit better */
+  .grid{ grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .card{ padding: 12px; }
+  .card .avatar{ width: 58px; height: 58px; }
+
+  /* Filters wrap tighter without overflowing */
+  .filters{ gap: 8px; }
+  
+  /* Drawer a hair narrower on tiny screens */
+  .drawer{ width: 280px; }
+}
+
 </style>
 </head>
 <body>
@@ -819,3 +872,4 @@ window.downloadStudentLeave = downloadStudentLeave;
 </script>
 </body>
 </html>
+
