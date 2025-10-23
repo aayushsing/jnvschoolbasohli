@@ -216,6 +216,27 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
   /* Drawer a hair narrower on tiny screens */
   .drawer{ width: 280px; }
 }
+  /* --- Small running name (marquee) next to "Signed in as" --- */
+.ticker{
+  display:inline-flex; align-items:center; gap:8px;
+  border:1px solid var(--stroke); border-radius:999px;
+  padding:6px 10px; margin-left:8px;
+  max-width:420px; overflow:hidden; background:rgba(255,255,255,0.04);
+}
+.ticker span{
+  display:inline-block; white-space:nowrap; padding-left:100%;
+  animation:ticker-move 14s linear infinite;
+  font-size:.86rem; color:var(--muted);
+}
+@keyframes ticker-move{ to { transform: translateX(-100%); } }
+
+/* Mobile sizing for the running name */
+@media (max-width:480px){
+  .ticker{ max-width:58vw; padding:5px 8px; }
+  .ticker span{ font-size:.8rem; }
+}
+
+
 
 </style>
 </head>
@@ -281,6 +302,10 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
     <!-- Toolbar -->
     <div class="toolbar">
       <div id="whoami" class="pill">Signed in as: <span id="whoamiText">—</span></div>
+      <div class="ticker" aria-label="School name">
+  <span>Pm Shri Jawahar Navodaya Vidyalaya Basohli pincode 184201 • Pm Shri Jawahar Navodaya Vidyalaya Basohli pincode 184201 • </span>
+</div>
+
     </div>
 
     <!-- Students -->
@@ -872,4 +897,5 @@ window.downloadStudentLeave = downloadStudentLeave;
 </script>
 </body>
 </html>
+
 
