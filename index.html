@@ -546,8 +546,38 @@ if (currentRole === "teacher1") {
 } else {
   verificationBtn.style.display = "none";
 }
+function loginUser(role) {
+  localStorage.setItem("loggedInRole", role);
+  showSection(role);
+}
+window.onload = function() {
+  const loggedInRole = localStorage.getItem("loggedInRole");
+  if (loggedInRole) {
+    showSection(loggedInRole); // Automatically log them back in
+  } else {
+    document.getElementById("loginContainer").style.display = "block";
+    document.getElementById("mainContainer").style.display = "none";
+  }
+};
+function logoutUser() {
+  localStorage.removeItem("loggedInRole");
+  document.getElementById("mainContainer").style.display = "none";
+  document.getElementById("loginContainer").style.display = "block";
+}
+// Save students
+function saveStudents(data) {
+  localStorage.setItem("studentsData", JSON.stringify(data));
+}
+
+// Load saved students
+function loadStudents() {
+  const data = localStorage.getItem("studentsData");
+  return data ? JSON.parse(data) : [];
+}
+  
 
 
 </script>
 </body>
 </html>
+
