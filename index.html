@@ -1,587 +1,821 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JNV Basohli Student Management</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JNV Basohli – Student Management (App Mode)</title>
+
+<!-- App-like font & icons (no external JS frameworks) -->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
 <style>
-body{font-family:Arial,sans-serif;background:#111;color:#fff;margin:0;padding:0;}
-#loginContainer{display:flex;justify-content:center;align-items:center;height:100vh;background:url('jnv2.png') no-repeat center center/cover;flex-direction:column;text-align:center;}
-#loginContainer h1{color:#0ff;text-shadow:0 0 10px #0ff;}
-.container{padding:20px;}
-input,select,button{padding:8px;margin:5px;border-radius:5px;border:none;outline:none;font-size:1rem;}
-button{cursor:pointer;background:linear-gradient(45deg,#ff00ff,#00ffff);color:#fff;font-weight:bold;box-shadow:0 0 10px #ff00ff,0 0 20px #00ffff;transition:0.3s;}
-button:hover{transform:scale(1.05);}
-.card{background:#222;margin:10px;padding:15px;border-radius:10px;box-shadow:0 0 15px #ff00ff,0 0 30px #00ffff;width:250px;display:inline-block;vertical-align:top;transition:0.3s;}
-.logo{position:fixed;width:70px;height:70px;border-radius:50%;overflow:hidden;z-index:999;box-shadow:0 0 25px rgba(0,255,255,0.8), inset 0 0 10px rgba(255,255,255,0.4);background:linear-gradient(145deg,#0ff,#005);animation:float 5s ease-in-out infinite;display:flex;justify-content:center;align-items:center;border:2px solid rgba(255,255,255,0.6);}
-@keyframes float{0%,100%{transform:translateY(0px) rotateY(0deg);}50%{transform:translateY(-10px) rotateY(360deg);}}
-.logo img{width:60px;height:60px;border-radius:50%;object-fit:cover;}
-.logo-top-left{top:15px;left:15px;}
-.logo-top-right{top:15px;right:15px;}
-.logo-bottom-left{bottom:15px;left:15px;}
-.logo-bottom-right{bottom:15px;right:15px;}
-.logo:hover{transform:scale(1.1);box-shadow:0 0 35px rgba(0,255,255,1);}
-.card img{width:80px;height:80px;border-radius:50%;object-fit:cover;margin-bottom:10px;box-shadow:0 0 5px #0ff;}
-h3{margin:5px 0;}
-.section{display:none;}
-#studentCards{display:flex;flex-wrap:wrap;justify-content:center;}
-table{width:100%;border-collapse:collapse;margin-top:10px;}
-th,td{padding:5px;text-align:left;border:1px solid #0ff;font-size:0.9rem;}
-@media screen and (max-width:768px){.card{width:90%;}input,select,button{width:90%; margin:5px 0;}table,th,td{font-size:0.8rem;}}
-#developer{color:#0ff;margin-top:10px;text-shadow:0 0 5px #0ff;}
-/* Style only for the Student Verification Card button */
-#menuButtons button.verification-btn {
-  background: linear-gradient(90deg, #00c6ff, #0072ff);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 10px;
-  margin: 10px auto;
-  width: 90%;
-  font-size: 15px;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
-  transition: all 0.3s ease;
+:root{
+  --bg:#0b0f14;
+  --card:#121826;
+  --muted:#93a4b7;
+  --text:#e6efff;
+  --brand:#00e5ff;
+  --brand2:#7a5cff;
+  --danger:#ff4d4d;
+  --ok:#39d98a;
+  --warn:#ffb020;
+  --stroke:rgba(255,255,255,0.06);
+  --glow:0 0 0 1px rgba(122,92,255,0.15), 0 12px 30px -10px rgba(0,229,255,0.25);
+  --radius:16px;
 }
 
-#menuButtons button.verification-btn:hover {
-  background: linear-gradient(90deg, #0072ff, #00c6ff);
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.8), 0 0 40px rgba(0, 255, 255, 0.4);
-  transform: scale(1.05);
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:radial-gradient(1200px 700px at 10% -10%, rgba(0,229,255,0.06), transparent 60%), radial-gradient(1000px 600px at 110% -20%, rgba(122,92,255,0.06), transparent 60%), var(--bg);
+  color:var(--text); font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; line-height:1.45;
 }
 
+/* Top App Bar */
+.appbar{
+  position:sticky; top:0; z-index:1000; backdrop-filter:saturate(180%) blur(10px);
+  background:linear-gradient(180deg, rgba(11,15,20,0.9), rgba(11,15,20,0.6));
+  border-bottom:1px solid var(--stroke);
+  display:flex; align-items:center; gap:12px; padding:10px 14px;
+}
+.appbar .logo{
+  width:40px; height:40px; border-radius:12px; overflow:hidden; display:grid; place-items:center;
+  background:linear-gradient(135deg, rgba(0,229,255,0.2), rgba(122,92,255,0.2));
+  box-shadow:inset 0 0 0 1px var(--stroke);
+}
+.appbar .logo img{width:28px; height:28px; border-radius:8px; object-fit:cover}
+.appbar h1{font-size:1.05rem; margin:0; font-weight:700; letter-spacing:0.2px}
+.appbar .spacer{flex:1}
+.badge{
+  font-size:.75rem; padding:4px 8px; border-radius:999px; color:#00131a;
+  background:linear-gradient(180deg, var(--brand), #00c2d6); font-weight:700;
+  box-shadow:var(--glow);
+}
+
+/* Layout */
+#app{display:none}
+.container{padding:16px; max-width:1100px; margin:0 auto}
+
+/* Drawer (sidebar) */
+.drawer{
+  position:fixed; top:56px; left:0; bottom:0; width:300px; max-width:85vw;
+  background:rgba(18,24,38,0.9); backdrop-filter: blur(10px);
+  border-right:1px solid var(--stroke);
+  transform:translateX(-101%); transition:transform .25s ease; z-index:999;
+}
+.drawer.open{transform:translateX(0)}
+.drawer .group{padding:14px}
+.drawer h4{margin:8px 8px 12px; font-size:.9rem; color:var(--muted); font-weight:600}
+.drawer button, .toolbar-btn{
+  width:100%; text-align:left; background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+  border:1px solid var(--stroke); color:var(--text); padding:12px 12px; margin:8px 0; border-radius:12px; cursor:pointer;
+  font-weight:600; transition:all .2s ease; display:flex; align-items:center; gap:10px;
+}
+.drawer button:hover{box-shadow:var(--glow); transform:translateY(-1px)}
+.toolbar{
+  display:flex; gap:10px; flex-wrap:wrap; margin:10px 0 2px;
+}
+.toolbar .toolbar-btn{width:auto; display:inline-flex; border-radius:999px; padding:10px 12px}
+
+/* Search & filters */
+.filters{
+  display:flex; flex-wrap:wrap; gap:10px; margin:10px 0 16px;
+}
+input,select,button{
+  background:rgba(255,255,255,0.04); border:1px solid var(--stroke); color:var(--text);
+  padding:10px 12px; border-radius:12px; outline:none; font-size:.95rem;
+}
+input::placeholder{color:#7e8da0}
+button.primary{
+  background:linear-gradient(90deg, var(--brand), var(--brand2)); border:none; color:#00131a;
+  font-weight:800; letter-spacing:.2px; box-shadow:var(--glow); cursor:pointer;
+}
+button.ghost{background:transparent}
+button.warn{background:linear-gradient(90deg, #ff7750, #ff4d4d); border:none; color:#200}
+button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; color:#002412}
+
+/* Cards grid with virtualized pagination */
+.grid{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:14px;
+}
+.card{
+  background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+  border:1px solid var(--stroke); border-radius:var(--radius); padding:14px; box-shadow:var(--glow); min-height:120px;
+}
+.card .avatar{
+  width:68px; height:68px; border-radius:50%; background:linear-gradient(135deg, rgba(0,229,255,.2), rgba(122,92,255,.2));
+  display:grid; place-items:center; overflow:hidden; border:1px solid var(--stroke); margin-bottom:8px;
+}
+.card .avatar img{width:100%; height:100%; object-fit:cover}
+.card h3{margin:6px 0 2px; font-size:1.02rem}
+.meta{font-size:.86rem; color:var(--muted)}
+.kv{display:grid; grid-template-columns:90px 1fr; gap:6px; font-size:.9rem; margin:8px 0}
+.kv div:nth-child(odd){color:var(--muted)}
+.actions{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap}
+
+/* Tables */
+.table{width:100%; border-collapse:collapse; background:rgba(255,255,255,0.02); border:1px solid var(--stroke); border-radius:12px; overflow:hidden}
+.table th,.table td{border-bottom:1px solid var(--stroke); padding:10px; text-align:left; font-size:.92rem}
+.table th{color:#b8c7da; background:rgba(255,255,255,0.03)}
+.table tr:last-child td{border-bottom:none}
+
+/* Sections */
+.section{display:none; margin-top:10px}
+.section.active{display:block}
+
+/* Login card */
+#loginView{
+  min-height:100vh; display:grid; place-items:center; padding:20px;
+  background:
+    radial-gradient(600px 300px at 10% 0%, rgba(122,92,255,0.18), transparent 60%),
+    radial-gradient(700px 300px at 90% 0%, rgba(0,229,255,0.18), transparent 60%), var(--bg);
+}
+.login-card{
+  width:min(420px, 92vw); background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03));
+  border:1px solid var(--stroke); border-radius:20px; padding:20px 18px; box-shadow:var(--glow)
+}
+.login-card h2{margin:6px 2px 2px}
+.helper{font-size:.9rem; color:var(--muted); margin:2px 2px 12px}
+.row{display:flex; gap:8px; flex-wrap:wrap}
+.row>*{flex:1}
+
+/* Pills */
+.pills{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
+.pill{font-size:.75rem; border:1px solid var(--stroke); padding:6px 8px; border-radius:999px; color:var(--muted)}
+
+/* Footer note */
+.note{font-size:.85rem; color:var(--muted); margin-top:8px}
+
+/* Floating drawer button */
+.menu-btn{
+  border-radius:12px; border:1px solid var(--stroke); background:rgba(255,255,255,0.04);
+  padding:8px 10px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; font-weight:700;
+}
+.menu-btn:hover{box-shadow:var(--glow)}
+
+/* Hidden utility */
+.hidden{display:none !important}
+
+/* Load more */
+.loadmore{margin:16px auto; display:block}
+
+/* Responsive tighten */
+@media (max-width: 560px){
+  .kv{grid-template-columns:82px 1fr}
+}
 </style>
 </head>
 <body>
 
-<!-- Logos -->
-<div class="logo logo-top-right"><img src="jnv image.jpg" alt="jnv2.png"></div>
+<!-- LOGIN VIEW -->
+<section id="loginView">
+  <div class="login-card">
+    <div style="display:flex; align-items:center; gap:10px">
+      <div class="logo"><img src="jnv image.jpg" alt="JNV"></div>
+      <div>
+        <h2>JNV Basohli – Student Management</h2>
+      </div>
+    </div>
 
-<div id="loginContainer">
-  <h1>JNV Basohli Student Management</h1>
-  <h3>Developed by Sankalp Sir</h3>
-  <input type="text" id="email" placeholder="Email / Admission No"><br>
-  <input type="password" id="password" placeholder="Password"><br>
-  <button onclick="login()">Login</button>
-</div>
-
-<div id="dashboard" class="container" style="display:none;">
-  <h2>Dashboard</h2>
-  <!-- Collapsible Sidebar Menu -->
-<div id="sidebarMenu">
-  <div id="menuToggle" onclick="toggleMenu()">☰ Menu</div>
-  <div id="menuButtons">
-    <button onclick="showSection('students')">Students</button>
-    <button onclick="showSection('leaveManagement')">Leave Management</button>
-    <button onclick="showSection('timetable')">Timetable</button>
-    <button onclick="showSection('hostelTasks')">Hostel Tasks</button>
-    <button onclick="window.open('https://aayushsing.github.io/Student-Verification-System/', '_blank')">Student Verification Card</button>
-    <input type="file" id="uploadExcel" style="display:none" onchange="uploadExcel(event)">
-    <button id="uploadBtn" onclick="document.getElementById('uploadExcel').click()">Upload Students Excel</button>
-    <button onclick="downloadExcel()" id="exportBtn">Export Excel</button>
-    <button onclick="logout()">Logout</button>
+    <label>Email / Admission No</label>
+    <input id="email" placeholder="e.g. sankalp@gmail.com or JNVT001" autocomplete="username" />
+    <div class="row">
+      <div style="flex:2">
+        <label>Password</label>
+        <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <div style="flex:1; display:flex; align-items:flex-end">
+        <button class="primary" style="width:100%" id="loginBtn">Login</button>
+      </div>
+    </div>
   </div>
-</div>
+</section>
 
-
-
-  <!-- Students -->
-  <div id="students" class="section">
-    <h3>Students</h3>
-    <input type="text" id="studentSearch" placeholder="Search by name or admission no" onkeyup="filterStudents()"><br>
-    <select id="hostelFilter" onchange="filterStudents()">
-      <option value="">All Hostels</option>
-      <option value="Arvali">Arvali</option>
-      <option value="Nilgiri">Nilgiri</option>
-      <option value="Shivalik">Shivalik</option>
-      <option value="Udaigiri">Udaigiri</option>
-    </select>
-    <select id="houseFilter" onchange="filterStudents()">
-      <option value="">All Houses</option>
-      <option value="Blue">Blue</option>
-      <option value="Red">Red</option>
-      <option value="Green">Green</option>
-      <option value="Yellow">Yellow</option>
-    </select>
-    <div id="studentCards"></div>
+<!-- APP VIEW -->
+<section id="app">
+  <!-- App Bar -->
+  <div class="appbar">
+    <button class="menu-btn" id="openDrawerBtn">☰ Menu</button>
+    <div class="logo"><img src="jnv image.jpg" alt="JNV"></div>
+    <h1>JNV Basohli</h1>
+    <div class="spacer"></div>
+    <span id="roleBadge" class="badge">ROLE</span>
+    <button id="logoutBtn" class="toolbar-btn">Logout</button>
   </div>
 
-  <!-- Leave Management -->
-  <div id="leaveManagement" class="section">
-    <h3>Leave Management</h3>
-    <input type="text" id="leaveSearchInput" placeholder="Search student by Admission No or Name" onkeyup="searchLeaveStudent()"><br>
-    <select id="leaveStudent"></select><br>
-    <label><input type="radio" name="leaveType" value="partial" checked> Partial Leave</label>
-    <label><input type="radio" name="leaveType" value="full"> Full Day Leave</label><br>
-    <input type="date" id="leaveFrom">
-    <input type="date" id="leaveTo"><br>
-    <input type="text" id="leaveReason" placeholder="Reason"><br>
-    <input type="text" id="leaveParent" placeholder="Parent Name"><br>
-    <button onclick="applyLeave()">Apply Leave</button>
-    <button onclick="downloadLeaveHistory()">Download Leave History</button>
-    <h4>Leave History</h4>
-    <table id="leaveHistory"></table>
-  </div>
+  <!-- Drawer -->
+  <aside class="drawer" id="drawer">
+    <div class="group">
+      <h4>Navigate</h4>
+      <button data-section="students">👥 Students</button>
+      <button data-section="leaveManagement" class="rbac r-teacher1">📝 Leave Management</button>
+      <button data-section="timetable" class="rbac r-teacher2">📅 Timetable</button>
+      <button data-section="hostelTasks" class="rbac r-teacher1">🏠 Hostel Tasks</button>
 
-  <!-- Timetable -->
-  <div id="timetable" class="section">
-    <h3>Timetable</h3>
-    <select id="ttClass">
-      <option value="6-A">6-A</option>
-      <option value="6-B">6-B</option>
-      <option value="7-A">7-A</option>
-      <option value="7-B">7-B</option>
-      <option value="8-A">8-A</option>
-      <option value="8-B">8-B</option>
-      <option value="9-A">9-A</option>
-      <option value="9-B">9-B</option>
-      <option value="10-A">10-A</option>
-      <option value="10-B">10-B</option>
-      <option value="11-A">11-A</option>
-      <option value="11-B">11-B</option>
-      <option value="12-A">12-A</option>
-      <option value="12-B">12-B</option>
-    </select>
-    <input type="date" id="ttDate">
-    <input type="time" id="ttTime">
-    <input type="text" id="ttTopic" placeholder="Topic">
-    <input type="text" id="ttTeacher" placeholder="Teacher Name">
-    <button onclick="addTimetable()">Add</button>
-    <button onclick="downloadTimetable()">Download Timetable</button>
-    <table id="timetableTable"></table>
-  </div>
+      <!-- Student Verification Card – visible to Teacher1 only -->
+      <button id="verificationBtn" class="rbac r-teacher1" onclick="window.open('https://aayushsing.github.io/Student-Verification-System/','_blank')">🪪 Student Verification Card</button>
+    </div>
+    <div class="group">
+      <h4>Data</h4>
+      <button id="uploadBtn" class="rbac r-teacher1">⬆️ Upload Students Excel</button>
+      <input type="file" id="uploadExcel" accept=".xlsx,.xls" class="hidden">
+      <button id="exportStudentsBtn" class="rbac r-teacher1 r-teacher2">⬇️ Export Students</button>
+    </div>
+  </aside>
 
-  <!-- Hostel Tasks -->
-  <div id="hostelTasks" class="section">
-    <h3>Hostel Tasks Management</h3>
-    <select id="taskHostel">
-      <option value="Arvali">Arvali</option>
-      <option value="Nilgiri">Nilgiri</option>
-      <option value="Shivalik">Shivalik</option>
-      <option value="Udaigiri">Udaigiri</option>
-    </select><br>
-    <input type="date" id="taskDate">
-    <input type="text" id="taskDesc" placeholder="Task Description">
-    <button onclick="addTask()">Add Task</button>
-    <button onclick="downloadTasks()">Download Tasks Excel</button>
-    <table id="taskTable"></table>
-  </div>
-</div>
+  <main class="container">
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div id="whoami" class="pill">Signed in as: <span id="whoamiText">—</span></div>
+    </div>
 
+    <!-- Students -->
+    <section id="students" class="section active">
+      <h2>Students</h2>
+      <div class="filters">
+        <input id="studentSearch" placeholder="Search by name or admission no" />
+        <select id="hostelFilter">
+          <option value="">All Hostels</option>
+          <option>Arvali</option>
+          <option>Nilgiri</option>
+          <option>Shivalik</option>
+          <option>Udaigiri</option>
+        </select>
+        <select id="houseFilter">
+          <option value="">All Houses</option>
+          <option>Blue</option>
+          <option>Red</option>
+          <option>Green</option>
+          <option>Yellow</option>
+        </select>
+      </div>
+      <div id="studentGrid" class="grid" aria-live="polite"></div>
+      <button id="loadMoreBtn" class="toolbar-btn loadmore hidden">Load more</button>
+    </section>
+
+    <!-- Leave Management -->
+    <section id="leaveManagement" class="section">
+      <h2>Leave Management</h2>
+      <div class="filters">
+        <input id="leaveSearchInput" placeholder="Search student by Admission No or Name" />
+        <select id="leaveStudent"></select>
+        <div class="pill">Type:</div>
+        <label class="pill"><input type="radio" name="leaveType" value="partial" checked> Partial</label>
+        <label class="pill"><input type="radio" name="leaveType" value="full"> Full Day</label>
+      </div>
+      <div class="filters">
+        <input type="date" id="leaveFrom">
+        <input type="date" id="leaveTo">
+        <input type="text" id="leaveReason" placeholder="Reason" />
+        <input type="text" id="leaveParent" placeholder="Parent Name" />
+        <button id="applyLeaveBtn" class="primary">Apply Leave</button>
+        <button id="downloadLeaveHistoryBtn" class="toolbar-btn">Export Leave History</button>
+      </div>
+      <table id="leaveHistory" class="table"></table>
+    </section>
+
+    <!-- Timetable -->
+    <section id="timetable" class="section">
+      <h2>Timetable</h2>
+      <div class="filters">
+        <select id="ttClass">
+          <option>6-A</option><option>6-B</option>
+          <option>7-A</option><option>7-B</option>
+          <option>8-A</option><option>8-B</option>
+          <option>9-A</option><option>9-B</option>
+          <option>10-A</option><option>10-B</option>
+          <option>11-A</option><option>11-B</option>
+          <option>12-A</option><option>12-B</option>
+        </select>
+        <input type="date" id="ttDate">
+        <input type="time" id="ttTime">
+        <input type="text" id="ttTopic" placeholder="Topic">
+        <input type="text" id="ttTeacher" placeholder="Teacher Name">
+        <button id="addTimetableBtn" class="primary rbac r-teacher2">Add</button>
+        <button id="downloadTimetableBtn" class="toolbar-btn">Export Timetable</button>
+      </div>
+      <table id="timetableTable" class="table"></table>
+    </section>
+
+    <!-- Hostel Tasks -->
+    <section id="hostelTasks" class="section">
+      <h2>Hostel Tasks Management</h2>
+      <div class="filters">
+        <select id="taskHostel">
+          <option>Arvali</option>
+          <option>Nilgiri</option>
+          <option>Shivalik</option>
+          <option>Udaigiri</option>
+        </select>
+        <input type="date" id="taskDate">
+        <input type="text" id="taskDesc" placeholder="Task Description">
+        <button id="addTaskBtn" class="primary">Add Task</button>
+        <button id="downloadTasksBtn" class="toolbar-btn">Export Tasks</button>
+      </div>
+      <table id="taskTable" class="table"></table>
+    </section>
+  </main>
+</section>
+
+<!-- XLSX for import/export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <script>
-const users=[
-  {email:"sankalp@gmail.com",password:"1234",role:"teacher1"},
-  {email:"reetwik@gmail.com",password:"4321",role:"teacher1"},
-  {email:"kalyani@gmail.com",password:"98745",role:"teacher2"},
-  {email:"aayush@gmail.com",password:"1234",role:"student",admissionNo:"JNVT001"},
-  {email:"rohan@gmail.com",password:"1234",role:"student",admissionNo:"JNVT002"},
-  {email:"priya@gmail.com",password:"1234",role:"student",admissionNo:"JNVT003"},
-  {email:"parent@gmail.com",password:"1234",role:"parent",admissionNo:"JNVT001"}
+/* ==========================
+   DATA (demo only – replace with server in production)
+========================== */
+const users = [
+  {email:"sankalp@gmail.com",   password:"1234", role:"teacher1", name:"Sankalp"},
+  {email:"reetwik@gmail.com",   password:"4321", role:"teacher1", name:"Reetwik"},
+  {email:"kalyani@gmail.com",   password:"98745",role:"teacher2", name:"Kalyani"},
+  {email:"aayush@gmail.com",    password:"1234", role:"student",  admissionNo:"JNVT001", name:"Aayush Singh"},
+  {email:"rohan@gmail.com",     password:"1234", role:"student",  admissionNo:"JNVT002", name:"Rohan Sharma"},
+  {email:"priya@gmail.com",     password:"1234", role:"student",  admissionNo:"JNVT003", name:"Priya Verma"},
+  {email:"parent@gmail.com",    password:"1234", role:"parent",   admissionNo:"JNVT001", name:"Parent of Aayush"}
 ];
 
-let currentUserRole="",currentStudent="";
-let students=[
-  {admissionNo:"JNVT001",name:"Aayush Singh",class:"12-A",hostel:"Nilgiri",house:"Blue",phone:"9876543210",email:"aayush@gmail.com",img:"",fatherName:"Mr. Singh",motherName:"Mrs. Singh",address:"Kathua, J&K"},
-  {admissionNo:"JNVT002",name:"Rohan Sharma",class:"12-B",hostel:"Shivalik",house:"Red",phone:"9876543211",email:"rohan@gmail.com",img:"",fatherName:"Mr. Sharma",motherName:"Mrs. Sharma",address:"Kathua, J&K"},
-  {admissionNo:"JNVT003",name:"Priya Verma",class:"11-A",hostel:"Udaigiri",house:"Green",phone:"9876543212",email:"priya@gmail.com",img:"",fatherName:"Mr. Verma",motherName:"Mrs. Verma",address:"Kathua, J&K"},
-  {admissionNo:"JNVT004",name:"Anjali Gupta",class:"10-A",hostel:"Arvali",house:"Yellow",phone:"9876543213",email:"anjali@gmail.com",img:"",fatherName:"Mr. Gupta",motherName:"Mrs. Gupta",address:"Kathua, J&K"},
-  {admissionNo:"JNVT005",name:"Manish Yadav",class:"9-B",hostel:"Nilgiri",house:"Blue",phone:"9876543214",email:"manish@gmail.com",img:"",fatherName:"Mr. Yadav",motherName:"Mrs. Yadav",address:"Kathua, J&K"},
-  {admissionNo:"JNVT006",name:"Sakshi Chauhan",class:"8-A",hostel:"Udaigiri",house:"Red",phone:"9876543215",email:"sakshi@gmail.com",img:"",fatherName:"Mr. Chauhan",motherName:"Mrs. Chauhan",address:"Kathua, J&K"},
-  {admissionNo:"JNVT007",name:"Ravi Kumar",class:"7-A",hostel:"Arvali",house:"Green",phone:"9876543216",email:"ravi@gmail.com",img:"",fatherName:"Mr. Kumar",motherName:"Mrs. Kumar",address:"Kathua, J&K"}
-];
-let leaves=JSON.parse(localStorage.getItem("leaves")||"[]");
-let timetable=JSON.parse(localStorage.getItem("timetable")||"[]");
-let tasks=JSON.parse(localStorage.getItem("tasks")||"[]");
+let students = JSON.parse(localStorage.getItem("students_seed_v2") || "[]");
+if(students.length === 0){
+  students = [
+    {admissionNo:"JNVT001",name:"Aayush Singh",class:"12-A",hostel:"Nilgiri",house:"Blue",phone:"9876543210",email:"aayush@gmail.com",img:"",fatherName:"Mr. Singh",motherName:"Mrs. Singh",address:"Kathua, J&K"},
+    {admissionNo:"JNVT002",name:"Rohan Sharma",class:"12-B",hostel:"Shivalik",house:"Red",phone:"9876543211",email:"rohan@gmail.com",img:"",fatherName:"Mr. Sharma",motherName:"Mrs. Sharma",address:"Kathua, J&K"},
+    {admissionNo:"JNVT003",name:"Priya Verma",class:"11-A",hostel:"Udaigiri",house:"Green",phone:"9876543212",email:"priya@gmail.com",img:"",fatherName:"Mr. Verma",motherName:"Mrs. Verma",address:"Kathua, J&K"},
+    {admissionNo:"JNVT004",name:"Anjali Gupta",class:"10-A",hostel:"Arvali",house:"Yellow",phone:"9876543213",email:"anjali@gmail.com",img:"",fatherName:"Mr. Gupta",motherName:"Mrs. Gupta",address:"Kathua, J&K"},
+    {admissionNo:"JNVT005",name:"Manish Yadav",class:"9-B",hostel:"Nilgiri",house:"Blue",phone:"9876543214",email:"manish@gmail.com",img:"",fatherName:"Mr. Yadav",motherName:"Mrs. Yadav",address:"Kathua, J&K"},
+    {admissionNo:"JNVT006",name:"Sakshi Chauhan",class:"8-A",hostel:"Udaigiri",house:"Red",phone:"9876543215",email:"sakshi@gmail.com",img:"",fatherName:"Mr. Chauhan",motherName:"Mrs. Chauhan",address:"Kathua, J&K"},
+    {admissionNo:"JNVT007",name:"Ravi Kumar",class:"7-A",hostel:"Arvali",house:"Green",phone:"9876543216",email:"ravi@gmail.com",img:"",fatherName:"Mr. Kumar",motherName:"Mrs. Kumar",address:"Kathua, J&K"}
+  ];
+  localStorage.setItem("students_seed_v2", JSON.stringify(students));
+}
 
-// Login
-function login() {
-    const email = document.getElementById("email").value;
-    const pass = document.getElementById("password").value;
-    const user = users.find(u => u.email === email && u.password === pass);
-    if (!user) { alert("Invalid credentials"); return; }
+let leaves = JSON.parse(localStorage.getItem("leaves_v2") || "[]");
+let timetable = JSON.parse(localStorage.getItem("timetable_v2") || "[]");
+let tasks = JSON.parse(localStorage.getItem("tasks_v2") || "[]");
 
-    currentUserRole = user.role;
-    if (user.admissionNo) currentStudent = user.admissionNo;
+/* ==========================
+   UTILS
+========================== */
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+const escapeHTML = (s="") => s.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+function saveAll(){
+  localStorage.setItem("leaves_v2", JSON.stringify(leaves));
+  localStorage.setItem("timetable_v2", JSON.stringify(timetable));
+  localStorage.setItem("tasks_v2", JSON.stringify(tasks));
+}
+function formatDate(ts){return new Date(ts).toLocaleDateString()}
 
-    document.getElementById("loginContainer").style.display = "none";
-    document.getElementById("dashboard").style.display = "block";
+/* ==========================
+   SESSION / RBAC
+========================== */
+const SESSION_KEY = "jnv_session_v2";
+let session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+let currentUserRole = session?.role || "";
+let currentStudent = session?.admissionNo || "";
+let currentUserName = session?.name || "";
 
-    applyRoleRestrictions(); // Apply role-based button visibility
+const roleBadge = $("#roleBadge");
+const whoamiText = $("#whoamiText");
 
-    loadCards();
-    displayLeaveHistory();
-    displayTimetable();
+function setRBACVisibility(){
+  // Hide all RBAC elements by default
+  $$(".rbac").forEach(el => el.classList.add("hidden"));
+  if(currentUserRole === "teacher1"){
+    $$(".r-teacher1").forEach(el => el.classList.remove("hidden"));
+  }else if(currentUserRole === "teacher2"){
+    $$(".r-teacher2").forEach(el => el.classList.remove("hidden"));
+    $("#exportStudentsBtn")?.classList.remove("hidden"); // teacher2 can export
+  }
+  // Student/Parent – only Students section shown
+  if(currentUserRole === "student" || currentUserRole === "parent"){
     showSection("students");
+  }
+  roleBadge.textContent = currentUserRole ? currentUserRole.toUpperCase() : "GUEST";
+  whoamiText.textContent = currentUserName || "—";
 }
 
-// Dashboard Student Cards
-function loadCards(){
-  const sContainer=document.getElementById("studentCards");
-  const leaveSelect=document.getElementById("leaveStudent");
-  sContainer.innerHTML=""; 
-  leaveSelect.innerHTML="";
-  
-  students.forEach(s=>{
-    if((currentUserRole==="student"||currentUserRole==="parent") && s.admissionNo!==currentStudent) return;
+/* ==========================
+   LOGIN (basic hardening for demo)
+========================== */
+const MAX_ATTEMPTS = 5;
+let attemptInfo = JSON.parse(localStorage.getItem("login_attempts") || '{"count":0,"until":0}');
 
-    // Count leaves by type
-    const partialCount = leaves.filter(l => l.admissionNo === s.admissionNo && l.type === "partial").length;
-    const fullCount = leaves.filter(l => l.admissionNo === s.admissionNo && l.type === "full").length;
-
-    sContainer.innerHTML+=`<div class="card">
-      <img src="${s.img}" alt="${s.name}">
-      <h3>${s.name}</h3>
-      <p>Admission No: ${s.admissionNo}</p>
-      <p>Class: ${s.class}</p>
-      <p>Hostel: ${s.hostel}</p>
-      <p>House: ${s.house}</p>
-      <p>Phone: ${s.phone}</p>
-      <p>Father: ${s.fatherName}</p>
-      <p>Mother: ${s.motherName}</p>
-      <p>Address: ${s.address}</p>
-      <p>Partial Leaves: ${partialCount}</p>
-      <p>Full Day Leaves: ${fullCount}</p>
-      ${currentUserRole==="teacher1"?`<button onclick="downloadStudentLeave('${s.admissionNo}')">Download Leaves</button>`:""}
-    </div>`;
-
-    if(currentUserRole==="teacher1") leaveSelect.innerHTML+=`<option value="${s.admissionNo}">${s.name} (${s.admissionNo})</option>`;
-  });
+function lockCheck(){
+  const now = Date.now();
+  if(attemptInfo.until && now < attemptInfo.until){
+    return Math.ceil((attemptInfo.until - now)/1000);
+  }
+  return 0;
+}
+function registerFail(){
+  const now = Date.now();
+  attemptInfo.count = (attemptInfo.count||0) + 1;
+  if(attemptInfo.count >= MAX_ATTEMPTS){
+    attemptInfo.until = now + 60_000; // 1 minute lock
+    attemptInfo.count = 0;
+  }
+  localStorage.setItem("login_attempts", JSON.stringify(attemptInfo));
+}
+function registerSuccess(){
+  attemptInfo = {count:0, until:0};
+  localStorage.setItem("login_attempts", JSON.stringify(attemptInfo));
 }
 
+$("#loginBtn").addEventListener("click", ()=>{
+  const lockLeft = lockCheck();
+  const err = $("#loginError");
+  if(lockLeft){
+    err.textContent = `Too many attempts. Try again in ${lockLeft}s.`;
+    err.style.display = "block";
+    return;
+  }
+  const email = $("#email").value.trim().toLowerCase();
+  const pass = $("#password").value;
+  const user = users.find(u => (u.email.toLowerCase()===email || u.admissionNo===email) && u.password===pass);
+  if(!user){
+    registerFail();
+    err.textContent = "Invalid credentials.";
+    err.style.display = "block";
+    return;
+  }
+  registerSuccess();
+  session = {role:user.role, admissionNo:user.admissionNo||"", name:user.name||user.email, email:user.email};
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  currentUserRole = session.role;
+  currentStudent = session.admissionNo || "";
+  currentUserName = session.name || "";
+  startApp();
+});
 
-// Student Search Dashboard
+/* ==========================
+   NAV + DRAWER
+========================== */
+const drawer = $("#drawer");
+$("#openDrawerBtn").addEventListener("click", ()=> drawer.classList.toggle("open"));
+document.addEventListener("keydown", (e)=>{
+  if(e.key === "Escape") drawer.classList.remove("open");
+});
+drawer.addEventListener("click", (e)=>{
+  if(e.target.matches("button[data-section]")){
+    showSection(e.target.getAttribute("data-section"));
+    drawer.classList.remove("open");
+  }
+});
+
+function showSection(id){
+  $$(".section").forEach(s=>s.classList.remove("active"));
+  $("#"+id).classList.add("active");
+}
+
+/* ==========================
+   STUDENTS – virtualized grid with paging
+========================== */
+const PAGE_SIZE = 8;
+let filteredStudents = [];
+let pageIndex = 0;
+
 function filterStudents(){
-  const val=document.getElementById("studentSearch").value.toLowerCase();
-  const hostel=document.getElementById("hostelFilter").value;
-  const house=document.getElementById("houseFilter").value;
-  const sContainer=document.getElementById("studentCards");
-  sContainer.innerHTML="";
-  students.forEach(s=>{
-    if((currentUserRole==="student"||currentUserRole==="parent") && s.admissionNo!==currentStudent) return;
-    if(hostel && s.hostel!==hostel) return;
-    if(house && s.house!==house) return;
-    if(s.name.toLowerCase().includes(val) || s.admissionNo.toLowerCase().includes(val)){
-      sContainer.innerHTML+=`<div class="card">
-        <img src="${s.img}" alt="${s.name}">
-        <h3>${s.name}</h3>
-        <p>Admission No: ${s.admissionNo}</p>
-        <p>Class: ${s.class}</p>
-        <p>Hostel: ${s.hostel}</p>
-        <p>House: ${s.house}</p>
-        <p>Phone: ${s.phone}</p>
-        <p>Father: ${s.fatherName}</p>
-        <p>Mother: ${s.motherName}</p>
-        <p>Address: ${s.address}</p>
-        <p>Total Leaves: ${leaves.filter(l=>l.admissionNo===s.admissionNo).length}</p>
-        ${currentUserRole==="teacher1"?`<button onclick="downloadStudentLeave('${s.admissionNo}')">Download Leaves</button>`:""}
-      </div>`;
-    }
+  const q = $("#studentSearch").value.trim().toLowerCase();
+  const hostel = $("#hostelFilter").value;
+  const house = $("#houseFilter").value;
+
+  filteredStudents = students.filter(s=>{
+    if((currentUserRole==="student"||currentUserRole==="parent") && s.admissionNo!==currentStudent) return false;
+    if(hostel && s.hostel !== hostel) return false;
+    if(house && s.house !== house) return false;
+    if(!q) return true;
+    return s.name.toLowerCase().includes(q) || s.admissionNo.toLowerCase().includes(q);
   });
+
+  pageIndex = 0;
+  renderStudentsPage();
 }
 
-// Leave Management
+function renderStudentsPage(){
+  const grid = $("#studentGrid");
+  if(pageIndex === 0) grid.innerHTML = "";
+
+  const start = pageIndex * PAGE_SIZE;
+  const slice = filteredStudents.slice(start, start + PAGE_SIZE);
+  slice.forEach(s=>grid.appendChild(studentCard(s)));
+
+  pageIndex++;
+  const hasMore = (pageIndex * PAGE_SIZE) < filteredStudents.length;
+  $("#loadMoreBtn").classList.toggle("hidden", !hasMore);
+}
+
+function studentCard(s){
+  const card = document.createElement("div");
+  card.className = "card";
+  const partialCount = leaves.filter(l=>l.admissionNo===s.admissionNo && l.type==="partial").length;
+  const fullCount = leaves.filter(l=>l.admissionNo===s.admissionNo && l.type==="full").length;
+
+  card.innerHTML = `
+    <div class="avatar">${ s.img ? `<img src="${escapeHTML(s.img)}" alt="${escapeHTML(s.name)}">` : "🧑" }</div>
+    <h3>${escapeHTML(s.name)}</h3>
+    <div class="meta">Admission No: ${escapeHTML(s.admissionNo)}</div>
+    <div class="kv">
+      <div>Class</div><div>${escapeHTML(s.class)}</div>
+      <div>Hostel</div><div>${escapeHTML(s.hostel)}</div>
+      <div>House</div><div>${escapeHTML(s.house)}</div>
+      <div>Phone</div><div>${escapeHTML(s.phone)}</div>
+      <div>Father</div><div>${escapeHTML(s.fatherName)}</div>
+      <div>Mother</div><div>${escapeHTML(s.motherName)}</div>
+      <div>Address</div><div>${escapeHTML(s.address)}</div>
+      <div>Leaves</div><div>Partial: ${partialCount} | Full: ${fullCount}</div>
+    </div>
+  `;
+  if(currentUserRole==="teacher1"){
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    const btn = document.createElement("button");
+    btn.className = "toolbar-btn";
+    btn.textContent = "Download Leaves";
+    btn.addEventListener("click", ()=>downloadStudentLeave(s.admissionNo));
+    actions.appendChild(btn);
+    card.appendChild(actions);
+  }
+  return card;
+}
+
+$("#studentSearch").addEventListener("input", debounce(filterStudents, 200));
+$("#hostelFilter").addEventListener("change", filterStudents);
+$("#houseFilter").addEventListener("change", filterStudents);
+$("#loadMoreBtn").addEventListener("click", renderStudentsPage);
+
+function debounce(fn, ms){
+  let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }
+}
+
+/* ==========================
+   LEAVES
+========================== */
 function searchLeaveStudent(){
-  const val=document.getElementById("leaveSearchInput").value.toLowerCase();
-  const leaveSelect=document.getElementById("leaveStudent");
-  leaveSelect.innerHTML="";
-  students.filter(s=>s.name.toLowerCase().includes(val)||s.admissionNo.toLowerCase().includes(val))
-          .forEach(s=>leaveSelect.innerHTML+=`<option value="${s.admissionNo}">${s.name} (${s.admissionNo})</option>`);
+  const val = $("#leaveSearchInput").value.trim().toLowerCase();
+  const list = students.filter(s=> s.name.toLowerCase().includes(val) || s.admissionNo.toLowerCase().includes(val));
+  const sel = $("#leaveStudent");
+  sel.innerHTML = "";
+  list.forEach(s=>{
+    const opt = document.createElement("option");
+    opt.value = s.admissionNo;
+    opt.textContent = `${s.name} (${s.admissionNo})`;
+    sel.appendChild(opt);
+  });
 }
 
 function applyLeave(){
-  const admissionNo=document.getElementById("leaveStudent").value;
-  const type=document.querySelector('input[name="leaveType"]:checked').value;
-  const from=document.getElementById("leaveFrom").value;
-  const to=document.getElementById("leaveTo").value;
-  const reason=document.getElementById("leaveReason").value;
-  const parent=document.getElementById("leaveParent").value;
-  if(!admissionNo||!from||!to) {alert("Fill all fields");return;}
-  leaves.push({admissionNo,type,from,to,reason,parent,date:new Date().toLocaleDateString()});
-  localStorage.setItem("leaves",JSON.stringify(leaves));
+  const admissionNo = $("#leaveStudent").value;
+  const type = document.querySelector('input[name="leaveType"]:checked').value;
+  const from = $("#leaveFrom").value;
+  const to = $("#leaveTo").value;
+  const reason = $("#leaveReason").value.trim();
+  const parent = $("#leaveParent").value.trim();
+  if(!admissionNo || !from || !to){ alert("Fill all fields"); return; }
+
+  leaves.push({admissionNo, type, from, to, reason, parent, date: formatDate(Date.now())});
+  saveAll();
   displayLeaveHistory();
-  loadCards();
+  filterStudents();
 }
 
 function displayLeaveHistory(){
-  const table=document.getElementById("leaveHistory");
-  table.innerHTML="<tr><th>Admission No</th><th>Type</th><th>From</th><th>To</th><th>Reason</th><th>Parent</th><th>Date Applied</th>";
-  if(currentUserRole==="teacher1") table.innerHTML+="<th>Action</th>";
-  table.innerHTML+="</tr>";
-  leaves.forEach((l,index)=>{
-    if((currentUserRole==="student"||currentUserRole==="parent") && l.admissionNo!==currentStudent) return;
-    table.innerHTML+=`<tr>
-      <td>${l.admissionNo}</td>
-      <td>${l.type}</td>
-      <td>${l.from}</td>
-      <td>${l.to}</td>
-      <td>${l.reason}</td>
-      <td>${l.parent}</td>
-      <td>${l.date}</td>
-      ${currentUserRole==="teacher1"?`<td><button onclick="deleteLeave(${index})">Delete</button></td>`:""}
-    </tr>`;
+  const t = $("#leaveHistory");
+  const hdrAction = currentUserRole==="teacher1" ? "<th>Action</th>" : "";
+  t.innerHTML = `<tr><th>Admission No</th><th>Type</th><th>From</th><th>To</th><th>Reason</th><th>Parent</th><th>Date Applied</th>${hdrAction}</tr>`;
+  leaves.forEach((l,idx)=>{
+    if((currentUserRole==="student"||currentUserRole==="parent") && l.admissionNo !== currentStudent) return;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${escapeHTML(l.admissionNo)}</td>
+      <td>${escapeHTML(l.type)}</td>
+      <td>${escapeHTML(l.from)}</td>
+      <td>${escapeHTML(l.to)}</td>
+      <td>${escapeHTML(l.reason||"")}</td>
+      <td>${escapeHTML(l.parent||"")}</td>
+      <td>${escapeHTML(l.date)}</td>
+    `;
+    if(currentUserRole==="teacher1"){
+      const td = document.createElement("td");
+      const btn = document.createElement("button");
+      btn.className = "warn";
+      btn.textContent = "Delete";
+      btn.addEventListener("click", ()=>deleteLeave(idx));
+      td.appendChild(btn);
+      tr.appendChild(td);
+    }
+    t.appendChild(tr);
   });
 }
 
 function deleteLeave(index){
-  if(confirm("Delete this leave record?")){
-    leaves.splice(index,1);
-    localStorage.setItem("leaves",JSON.stringify(leaves));
-    displayLeaveHistory();
-    loadCards();
-  }
+  if(!confirm("Delete this leave record?")) return;
+  leaves.splice(index,1);
+  saveAll();
+  displayLeaveHistory();
+  filterStudents();
 }
 
 function downloadLeaveHistory(){
-  let wb=XLSX.utils.book_new();
-  let ws=XLSX.utils.json_to_sheet(leaves);
-  XLSX.utils.book_append_sheet(wb,ws,"Leaves");
-  XLSX.writeFile(wb,"LeaveHistory.xlsx");
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(leaves);
+  XLSX.utils.book_append_sheet(wb, ws, "Leaves");
+  XLSX.writeFile(wb, "LeaveHistory.xlsx");
 }
 
 function downloadStudentLeave(admissionNo){
-  const sLeaves=leaves.filter(l=>l.admissionNo===admissionNo);
-  let wb=XLSX.utils.book_new();
-  let ws=XLSX.utils.json_to_sheet(sLeaves);
-  XLSX.utils.book_append_sheet(wb,ws,"Leaves");
-  XLSX.writeFile(wb,`Leaves_${admissionNo}.xlsx`);
+  const sLeaves = leaves.filter(l=>l.admissionNo===admissionNo);
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(sLeaves);
+  XLSX.utils.book_append_sheet(wb, ws, "Leaves");
+  XLSX.writeFile(wb, `Leaves_${admissionNo}.xlsx`);
 }
 
-// Hostel Tasks
+/* ==========================
+   HOSTEL TASKS
+========================== */
 function addTask(){
-  const hostel=document.getElementById("taskHostel").value;
-  const date=document.getElementById("taskDate").value;
-  const desc=document.getElementById("taskDesc").value;
-  if(!hostel||!date||!desc){alert("Fill all fields");return;}
-  tasks.push({hostel,date,desc});
-  localStorage.setItem("tasks",JSON.stringify(tasks));
-  displayTasks();
+  const hostel = $("#taskHostel").value;
+  const date = $("#taskDate").value;
+  const desc = $("#taskDesc").value.trim();
+  if(!hostel || !date || !desc){ alert("Fill all fields"); return; }
+  tasks.push({hostel, date, desc});
+  saveAll(); displayTasks();
 }
-
 function displayTasks(){
-  const table=document.getElementById("taskTable");
-  table.innerHTML="<tr><th>Hostel</th><th>Date</th><th>Task</th>";
-  if(currentUserRole==="teacher1") table.innerHTML+="<th>Action</th>";
-  table.innerHTML+="</tr>";
-  tasks.forEach((t,index)=>{
-    table.innerHTML+=`<tr>
-      <td>${t.hostel}</td>
-      <td>${t.date}</td>
-      <td>${t.desc}</td>
-      ${currentUserRole==="teacher1"?`<td><button onclick="deleteTask(${index})">Delete</button></td>`:""}
-    </tr>`;
+  const t = $("#taskTable");
+  const hdrAction = currentUserRole==="teacher1" ? "<th>Action</th>" : "";
+  t.innerHTML = `<tr><th>Hostel</th><th>Date</th><th>Task</th>${hdrAction}</tr>`;
+  tasks.forEach((task,idx)=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${escapeHTML(task.hostel)}</td><td>${escapeHTML(task.date)}</td><td>${escapeHTML(task.desc)}</td>`;
+    if(currentUserRole==="teacher1"){
+      const td = document.createElement("td");
+      const btn = document.createElement("button");
+      btn.className="warn"; btn.textContent="Delete";
+      btn.addEventListener("click", ()=>deleteTask(idx));
+      td.appendChild(btn); tr.appendChild(td);
+    }
+    t.appendChild(tr);
   });
 }
-
 function deleteTask(index){
-  if(confirm("Delete this task?")){
-    tasks.splice(index,1);
-    localStorage.setItem("tasks",JSON.stringify(tasks));
-    displayTasks();
-  }
+  if(!confirm("Delete this task?")) return;
+  tasks.splice(index,1);
+  saveAll(); displayTasks();
 }
-
 function downloadTasks(){
-  let wb=XLSX.utils.book_new();
-  let ws=XLSX.utils.json_to_sheet(tasks);
-  XLSX.utils.book_append_sheet(wb,ws,"Tasks");
-  XLSX.writeFile(wb,"HostelTasks.xlsx");
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(tasks);
+  XLSX.utils.book_append_sheet(wb, ws, "Tasks");
+  XLSX.writeFile(wb, "HostelTasks.xlsx");
 }
 
-// Timetable
-// Add Timetable Entry (Teacher2 only)
+/* ==========================
+   TIMETABLE (Teacher2)
+========================== */
 function addTimetable(){
-  if(currentUserRole !== "teacher2"){ 
-    alert("Only Teacher2 can add timetable"); 
-    return; 
-  }
-  const cls = document.getElementById("ttClass").value;
-  const date = document.getElementById("ttDate").value;
-  const time = document.getElementById("ttTime").value;
-  const topic = document.getElementById("ttTopic").value;
-  const teacher = document.getElementById("ttTeacher").value;
+  if(currentUserRole !== "teacher2"){ alert("Only Teacher2 can add timetable"); return; }
+  const cls = $("#ttClass").value;
+  const date = $("#ttDate").value;
+  const time = $("#ttTime").value;
+  const topic = $("#ttTopic").value.trim();
+  const teacher = $("#ttTeacher").value.trim();
   if(!date || !time || !topic || !teacher){ alert("Fill all fields"); return; }
   timetable.push({cls, date, time, topic, teacher});
-  localStorage.setItem("timetable", JSON.stringify(timetable));
+  saveAll();
   displayTimetable();
 }
-
-// Display Timetable
 function displayTimetable(){
-  const table = document.getElementById("timetableTable");
-  table.innerHTML = `<tr><th>Class</th><th>Date</th><th>Time</th><th>Topic</th><th>Teacher</th><th>Action</th></tr>`;
-  timetable.forEach((t,i)=>{
-    table.innerHTML += `<tr>
-      <td>${t.cls}</td>
-      <td>${t.date}</td>
-      <td>${t.time}</td>
-      <td>${t.topic}</td>
-      <td>${t.teacher}</td>
-      <td>${currentUserRole==="teacher2"?`<button onclick="deleteTimetable(${i})">Delete</button>`:"-"}</td>
-    </tr>`;
+  const t = $("#timetableTable");
+  t.innerHTML = `<tr><th>Class</th><th>Date</th><th>Time</th><th>Topic</th><th>Teacher</th><th>Action</th></tr>`;
+  timetable.forEach((row, i)=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${escapeHTML(row.cls)}</td>
+      <td>${escapeHTML(row.date)}</td>
+      <td>${escapeHTML(row.time)}</td>
+      <td>${escapeHTML(row.topic)}</td>
+      <td>${escapeHTML(row.teacher)}</td>
+      <td>${ currentUserRole==="teacher2" ? `<button class="warn" data-del="${i}">Delete</button>` : "-" }</td>
+    `;
+    t.appendChild(tr);
+  });
+  t.querySelectorAll("button[data-del]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      if(currentUserRole !== "teacher2"){ alert("Only Teacher2 can delete timetable"); return; }
+      if(!confirm("Delete this timetable entry?")) return;
+      const idx = +e.currentTarget.getAttribute("data-del");
+      timetable.splice(idx,1);
+      saveAll(); displayTimetable();
+    });
   });
 }
-
-// Delete timetable entry
-function deleteTimetable(index){
-  if(currentUserRole !== "teacher2"){ 
-    alert("Only Teacher2 can delete timetable"); 
-    return; 
-  }
-  if(!confirm("Are you sure you want to delete this timetable entry?")) return;
-  timetable.splice(index,1);
-  localStorage.setItem("timetable", JSON.stringify(timetable));
-  displayTimetable();
-}
-
-
 function downloadTimetable(){
-  let wb=XLSX.utils.book_new();
-  let ws=XLSX.utils.json_to_sheet(timetable);
-  XLSX.utils.book_append_sheet(wb,ws,"Timetable");
-  XLSX.writeFile(wb,"Timetable.xlsx");
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(timetable);
+  XLSX.utils.book_append_sheet(wb, ws, "Timetable");
+  XLSX.writeFile(wb, "Timetable.xlsx");
 }
 
-// Sections
-function showSection(id){
-  document.querySelectorAll(".section").forEach(s=>s.style.display="none");
-  document.getElementById(id).style.display="block";
-}
-
-// Logout
-function logout(){location.reload();}
-
-// Excel Upload
-function uploadExcel(event){
-  const file=event.target.files[0];
-  const reader=new FileReader();
-  reader.onload=function(e){
-    const data=new Uint8Array(e.target.result);
-    const wb=XLSX.read(data,{type:"array"});
-    const ws=wb.Sheets[wb.SheetNames[0]];
-    const excelData=XLSX.utils.sheet_to_json(ws);
-    excelData.forEach(s=>students.push(s));
-    loadCards();
+/* ==========================
+   IMPORT / EXPORT STUDENTS
+========================== */
+$("#uploadBtn").addEventListener("click", ()=> $("#uploadExcel").click());
+$("#uploadExcel").addEventListener("change", (event)=>{
+  const file = event.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    const data = new Uint8Array(e.target.result);
+    const wb = XLSX.read(data, {type:"array"});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws);
+    // Expect headers matching keys of student object; ignore unknown fields
+    rows.forEach(r=>{
+      const s = {
+        admissionNo: r.admissionNo || r["Admission No"] || r["admission_no"] || "",
+        name: r.name || r["Name"] || "",
+        class: r.class || r["Class"] || "",
+        hostel: r.hostel || r["Hostel"] || "",
+        house: r.house || r["House"] || "",
+        phone: r.phone || r["Phone"] || "",
+        email: r.email || r["Email"] || "",
+        img: r.img || r["Image"] || "",
+        fatherName: r.fatherName || r["Father Name"] || "",
+        motherName: r.motherName || r["Mother Name"] || "",
+        address: r.address || r["Address"] || ""
+      };
+      if(s.admissionNo) students.push(s);
+    });
+    localStorage.setItem("students_seed_v2", JSON.stringify(students));
+    filterStudents();
+    alert("Students uploaded.");
   };
   reader.readAsArrayBuffer(file);
-}
-
-// Export Excel
-function downloadExcel(){
-  let wb=XLSX.utils.book_new();
-  let ws=XLSX.utils.json_to_sheet(students);
-  XLSX.utils.book_append_sheet(wb,ws,"Students");
-  XLSX.writeFile(wb,"Students.xlsx");
-}
-function loadDashboard(){
-  if(currentUserRole==="student" || currentUserRole==="parent"){
-    document.getElementById("uploadBtn").style.display="none";
-    document.getElementById("exportBtn").style.display="none";
-    document.querySelectorAll("#dashboard button").forEach(btn=>{
-      if(btn.innerText !== "Logout") btn.style.display="none";
-    });
-  } else if(currentUserRole==="teacher1"){
-    document.getElementById("uploadBtn").style.display="inline-block";
-    document.getElementById("exportBtn").style.display="inline-block";
-  } else if(currentUserRole==="teacher2"){
-    document.getElementById("uploadBtn").style.display="none";
-    document.getElementById("exportBtn").style.display="inline-block";
-  }
-}
-students.forEach(s=>{
-  // If student/parent, show only their own
-  if((currentUserRole==="student" || currentUserRole==="parent") && s.admissionNo!==currentStudent) return;
-
-  // render card
 });
-function applyRoleRestrictions() {
-    const studentsBtn = document.querySelector("button[onclick=\"showSection('students')\"]");
-    const leaveBtn = document.querySelector("button[onclick=\"showSection('leaveManagement')\"]");
-    const ttBtn = document.querySelector("button[onclick=\"showSection('timetable')\"]");
-    const hmBtn = document.querySelector("button[onclick=\"showSection('hostelTasks')\"]");
-    const uploadBtn = document.getElementById("uploadBtn");
-    const exportBtn = document.getElementById("exportBtn");
+$("#exportStudentsBtn").addEventListener("click", ()=>{
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(students);
+  XLSX.utils.book_append_sheet(wb, ws, "Students");
+  XLSX.writeFile(wb, "Students.xlsx");
+});
 
-    if(currentUserRole === "student" || currentUserRole === "parent") {
-        // Students & parents: can only see own profile
-        studentsBtn.style.display = "inline-block";  // show only Students section
-        leaveBtn.style.display = "none";
-        ttBtn.style.display = "none";
-        hmBtn.style.display = "none";
-        uploadBtn.style.display = "none";
-        exportBtn.style.display = "none";
+/* ==========================
+   DOWNLOAD BUTTONS
+========================== */
+$("#downloadLeaveHistoryBtn").addEventListener("click", downloadLeaveHistory);
+$("#downloadTasksBtn").addEventListener("click", downloadTasks);
+$("#downloadTimetableBtn").addEventListener("click", downloadTimetable);
 
-        // Hide all sections except students
-        document.getElementById("leaveManagement").style.display = "none";
-        document.getElementById("timetable").style.display = "none";
-        document.getElementById("hostelTasks").style.display = "none";
-    }
-    else if(currentUserRole === "teacher1") {
-        // Teacher1: full access to leave & hostel management
-        studentsBtn.style.display = "inline-block";
-        leaveBtn.style.display = "inline-block";
-        ttBtn.style.display = "none";  // timetable managed by Teacher2
-        hmBtn.style.display = "inline-block";
-        uploadBtn.style.display = "inline-block";
-        exportBtn.style.display = "inline-block";
-         
-    }
-    else if(currentUserRole === "teacher2") {
-        // Teacher2: only timetable & export
-        studentsBtn.style.display = "inline-block";
-        leaveBtn.style.display = "none";
-        ttBtn.style.display = "inline-block";
-        hmBtn.style.display = "none";
-        uploadBtn.style.display = "none";
-        exportBtn.style.display = "inline-block";
-    }
+/* ==========================
+   BIND ACTIONS
+========================== */
+$("#applyLeaveBtn").addEventListener("click", applyLeave);
+$("#leaveSearchInput").addEventListener("input", debounce(searchLeaveStudent, 200));
+$("#addTaskBtn").addEventListener("click", addTask);
+$("#addTimetableBtn").addEventListener("click", addTimetable);
+
+/* ==========================
+   LOGOUT
+========================== */
+$("#logoutBtn").addEventListener("click", ()=>{
+  localStorage.removeItem(SESSION_KEY);
+  location.reload();
+});
+
+/* ==========================
+   START APP
+========================== */
+function startApp(){
+  // Toggle views
+  $("#loginView").style.display = "none";
+  $("#app").style.display = "block";
+
+  // RBAC
+  setRBACVisibility();
+
+  // Initial renders
+  filterStudents();
+  displayLeaveHistory();
+  displayTimetable();
+  displayTasks();
+
+  // Populate leave student list by default
+  searchLeaveStudent();
 }
 
-// Example: role is stored in localStorage after login
-const currentRole = localStorage.getItem("role");  // "teacher1", "teacher2", "student", "parent"
-
-const verificationBtn = document.getElementById("verificationBtn");
-
-// Show only for Teacher 1
-if (currentRole === "teacher1") {
-  verificationBtn.style.display = "block";
-} else {
-  verificationBtn.style.display = "none";
-}
-function loginUser(role) {
-  localStorage.setItem("loggedInRole", role);
-  showSection(role);
-}
-window.onload = function() {
-  const loggedInRole = localStorage.getItem("loggedInRole");
-  if (loggedInRole) {
-    showSection(loggedInRole); // Automatically log them back in
-  } else {
-    document.getElementById("loginContainer").style.display = "block";
-    document.getElementById("mainContainer").style.display = "none";
-  }
-};
-function logoutUser() {
-  localStorage.removeItem("loggedInRole");
-  document.getElementById("mainContainer").style.display = "none";
-  document.getElementById("loginContainer").style.display = "block";
-}
-// Save students
-function saveStudents(data) {
-  localStorage.setItem("studentsData", JSON.stringify(data));
+/* On load: resume session if present */
+if(session && session.role){
+  startApp();
+}else{
+  $("#loginView").style.display = "grid";
 }
 
-// Load saved students
-function loadStudents() {
-  const data = localStorage.getItem("studentsData");
-  return data ? JSON.parse(data) : [];
-}
-  
-
+/* ==========================
+   GLOBAL EXPOSE (Excel helpers used in cards)
+========================== */
+window.downloadStudentLeave = downloadStudentLeave;
 
 </script>
 </body>
 </html>
-
-
