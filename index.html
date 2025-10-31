@@ -381,7 +381,7 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
       <h2>Hostel Tasks Management</h2>
       <div class="filters">
         <select id="taskHostel">
-          <option>Arvali</option>
+          <option>Aravali</option>
           <option>Nilgiri</option>
           <option>Shivalik</option>
           <option>Udaigiri</option>
@@ -407,7 +407,7 @@ const users = [
   {email:"sankalp@gmail.com",   password:"1234", role:"teacher1", name:"Sankalp"},
   {email:"reetwik@gmail.com",   password:"4321", role:"teacher1", name:"Reetwik"},
   {email:"kalyani@gmail.com",   password:"98745",role:"teacher2", name:"Kalyani"},
-  {email:"aayush@gmail.com",    password:"1234", role:"student",  admissionNo:"JNVT001", name:"Aayush Singh"},
+  {email:"aayush@gmail.com",    password:"1234", role:"student",  admissionNo:"2912", name:"HARI NITHAR"},
   {email:"rohan@gmail.com",     password:"1234", role:"student",  admissionNo:"JNVT002", name:"Rohan Sharma"},
   {email:"priya@gmail.com",     password:"1234", role:"student",  admissionNo:"JNVT003", name:"Priya Verma"},
   {email:"parent@gmail.com",    password:"1234", role:"parent",   admissionNo:"JNVT001", name:"Parent of Aayush"}
@@ -416,13 +416,46 @@ const users = [
 let students = JSON.parse(localStorage.getItem("students_seed_v2") || "[]");
 if(students.length === 0){
   students = [
-    {admissionNo:"JNVT001",name:"Aayush Singh",class:"12-A",hostel:"Nilgiri",house:"Blue",phone:"9876543210",email:"aayush@gmail.com",img:"",fatherName:"Mr. Singh",motherName:"Mrs. Singh",address:"Kathua, J&K"},
-    {admissionNo:"JNVT002",name:"Rohan Sharma",class:"12-B",hostel:"Shivalik",house:"Red",phone:"9876543211",email:"rohan@gmail.com",img:"",fatherName:"Mr. Sharma",motherName:"Mrs. Sharma",address:"Kathua, J&K"},
-    {admissionNo:"JNVT003",name:"Priya Verma",class:"11-A",hostel:"Udaigiri",house:"Green",phone:"9876543212",email:"priya@gmail.com",img:"",fatherName:"Mr. Verma",motherName:"Mrs. Verma",address:"Kathua, J&K"},
-    {admissionNo:"JNVT004",name:"Anjali Gupta",class:"10-A",hostel:"Arvali",house:"Yellow",phone:"9876543213",email:"anjali@gmail.com",img:"",fatherName:"Mr. Gupta",motherName:"Mrs. Gupta",address:"Kathua, J&K"},
-    {admissionNo:"JNVT005",name:"Manish Yadav",class:"9-B",hostel:"Nilgiri",house:"Blue",phone:"9876543214",email:"manish@gmail.com",img:"",fatherName:"Mr. Yadav",motherName:"Mrs. Yadav",address:"Kathua, J&K"},
-    {admissionNo:"JNVT006",name:"Sakshi Chauhan",class:"8-A",hostel:"Udaigiri",house:"Red",phone:"9876543215",email:"sakshi@gmail.com",img:"",fatherName:"Mr. Chauhan",motherName:"Mrs. Chauhan",address:"Kathua, J&K"},
-    {admissionNo:"JNVT007",name:"Ravi Kumar",class:"7-A",hostel:"Arvali",house:"Green",phone:"9876543216",email:"ravi@gmail.com",img:"",fatherName:"Mr. Kumar",motherName:"Mrs. Kumar",address:"Kathua, J&K"}
+    {admissionNo:"2912",name:"HARI NIHAR",class:"IX A",hostel:"Aravali",phone:"7780851610",email:"harinihar@gmail.com",img:"",fatherName:"SANJEEV KUMAR",motherName:"MEENIKSHI MEHRA",address:"V.P.O BHADDU TESHIL BILLAWAR DIST KATHU"},
+    {admissionNo:"2904",name:"MOHIT KUMAR",class:"IX A",hostel:"Aravali",house:"",phone:"7889519688",email:"mohitkumar@gmail.com",img:"",fatherName:"SHAM LAL",motherName:"TOSHI DEVI",address:"V.P.O JARNOTA TESHIL BASOHLI DIST KATHUA"},
+    {admissionNo:"2960",name:"SHARAB AHMED MALIK",class:"IX A",hostel:"Aravali",house:"",phone:"7006458872",email:"sharabahmedmalik@gmail.com",img:"",fatherName:"SHABIR AHMED",motherName:"BUSHRAY BEGUM",address:"VILLAGE BADNOTA TEH LOHAI MALHAR,DIST KATHUA"},
+    {admissionNo:"2891",name:"SPARSH SINGH",class:"IX A",hostel:"Aravali",house:"",phone:"7006195102",email:"sparshsingh@gmail.com",img:"",fatherName:"RAJENDAR",motherName:"RANJANA PUNIA",address:"VILLAGE KALARI TESHIL KATHUA DIST KATHUA"},
+    {admissionNo:"2917",name:"SUDHANSHU SONI",class:"IX A",hostel:"Aravali",house:"",phone:"9541344600",email:"sudhanshusoni@gmail.com",img:"",fatherName:"MANGU RAM",motherName:"SUSHMA DEVI",address:"V.P.O PANDORI,TEHSIL NAGRI PAROLE,DISTRICT KATHUA,JAMMU &KASHMIR,"},
+    {admissionNo:"2875",name:"VANSHIK MANKOTIA",class:"IX A",hostel:"Aravali",house:"",phone:"9622129129",email:"vanshikmankotia@gmail.com",img:"",fatherName:"GURDEV SINGH",motherName:"SHILPY RAJPUT",address:"VILLAGE BAKTHPUR TESHIL BILLAWAR DIST KATHUA"},
+    {admissionNo:"4054",name:"DAKSH VERMA",class:"IX A",hostel:"Aravali",house:"",phone:"9622492267",email:"dakshverma@gmail.com",img:"",fatherName:"SATISHKUMAR",motherName:"RANIDEVI",address:"V.P.O JARNOTA TESHIL BASOHLI DIST KATHUA"},
+    {admissionNo:"4056",name:"PRINCE VERMA",class:"IX B",hostel:"Aravali",house:"",phone:"9622218975",email:"princeverma@gmail.com",img:"",fatherName:" MINTU KUMAR",motherName:" POONAM DEVI",address:"VILL. DRAMAN, TEHSIL BASOHLI, P/O DRAMAN,KATHUA, J&K, 184201"},
+    {admissionNo:"2840",name:"DHEERAJ SHARMA",class:"X A",hostel:"Aravali",house:"",phone:"9419129902",email:"dheerajsharma@gmail.com",img:"",fatherName:" RAM PARSHAD",motherName:" KAILASH",address:"VILL. MEARTH, P.O. BUDHI, TESHIL & DISTT. KATHUA PIN. 184143"},
+    {admissionNo:"2781",name:"MANIK BOURNEY",class:"X A",hostel:"Aravali",house:"",phone:"9697175274",email:"manikbourney@gmail.com",img:"",fatherName:" TILAK RAJ",motherName:" SAMBO DEVI",address:"WARD NO. 3 NEAR GMS DADWARA, P.O. BHADDU, TESHIL. BILLAWAR, DISTT. KATHUA PIN. 184203"},
+    {admissionNo:"2855",name:"BHANU PARTAP",class:"X B",hostel:"Aravali",house:"",phone:"7889583545",email:"bhanupartap@gmail.com",img:"",fatherName:"LAJJAY RAM",motherName:"RANI DEVI",address:"VPO. NAGRI PAROLE TESHIL. NAGRI PAROLE, DISTT. KATHUA PIN. 184151"},
+    {admissionNo:"2803",name:"DHEERAJ BHAGAT",class:"X B",hostel:"Aravali",house:"",phone:"9622320075",email:"dheerajbhagat@gmail.com",img:"",fatherName:"PARSHOTAM LAL",motherName:"ANJANA DEVI",address:"VILL. JAGATPUR MARHEEN, TESHIL. MARHEEN DISTT. KATHUA PIN. 184148"},
+    {admissionNo:"4024",name:"DHRUB KESAR",class:"X B",hostel:"Aravali",house:"",phone:"6005268289",email:"dhrubkesar@gmail.com",img:"",fatherName:"PAWAN KUMAR",motherName:"SUSHMA DEVI",address:"VILL. KATHEEL DHANGU TESHIL.  MAJALTA DISTT. UDHAMPUR, P.O PEOUNI PIN. 182117"},
+    {admissionNo:"2815",name:"GAJIT KUMAR",class:"X B",hostel:"Aravali",house:"",phone:"7006236041",email:"gajitkumar@gmail.com",img:"",fatherName:"NARESH KUMAR",motherName:"SONU DEVI",address:"WARD NO. 3 VILL SANOHI P.O. TAPPER, TESHIL BANI, DISTT. KATHUA PIN. 184206"},
+    {admissionNo:"2854",name:"MAHEE BILLOWRIA",class:"X B",hostel:"Aravali",house:"",phone:"9697162402",email:"maheebillowria@gmail.com",img:"",fatherName:"HARDEEP SINGH",motherName:"NEERAJ BALA",address:"VILL. BARWAL, TESHIL & DISTT. KATHUA PIN. 184143"},
+    {admissionNo:"2797",name:"RUDRA VERMA",class:"X B",hostel:"Aravali",house:"",phone:"6005238677",email:"rudraverma@gmail.com",img:"",fatherName:"RAKESH KUMAR",motherName:"REKHA RANI",address:"VPO. KHANPUR, TESHIL. MARHEEN, DISTT. KATHUA PIN. 184148"},
+    {admissionNo:"2827",name:"SANGAM FACKOLU",class:"X B",hostel:"Aravali",house:"",phone:"9149710375",email:"sangamfackolu@gmail.com",img:"",fatherName:"MUKESH KUMAR",motherName:"VEENA DEVI",address:"WARD NO. 5, NEAR SHIV TEMPLE, VILL. THANA, P.O. PLASSI, TESHIL. BASOHLI DISTT. KATHUA PIN.184201"},
+    {admissionNo:"2762",name:"ARYAN SATYAL",class:"XI C",hostel:"Aravali",house:"",phone:"6006512829",email:"aryansatyal@gmail.com",img:"",fatherName:"JEET KUMAR",motherName:"SUSHMA RANI",address:"R/O NANAN P/O GHATI TESHIL& DISTT. KATHUA PIN. 184201"},
+    {admissionNo:"2733",name:"PUSHPAL SINGH",class:"XI B",hostel:"Aravali",house:"",phone:"9149664731",email:"pushpalsingh@gmail.com",img:"",fatherName:"SANJAY SINGH",motherName:"PINKY DEVI",address:"VPO. MALHAR TESHIL. LOHAI-MALHAR DISTT. KATHUA PIN. 184204"},
+    {admissionNo:"2709",name:"RAJESH KATAL",class:"XI B",hostel:"Aravali",house:"",phone:"7298356210",email:"rajeshkatal@gmail.com",img:"",fatherName:"KAKA RAM KATAL",motherName:"KANTA DEVI",address:"VPO. WNO. POONDA TESHIL. MAHANPUR DISTT. KATHUA PIN. 184201"},
+    {admissionNo:"2603",name:"DEEP KUMAR",class:"XII A",hostel:"Aravali",house:"",phone:"8082206251",email:"deepkumar@gmail.com",img:"",fatherName:"OM PRAKASH",motherName:"SUSHMA DEVI",address:"SERU BANI KATHUA 184206"},
+    {admissionNo:"2866",name:"GOURAV SHARMA",class:"XII A",hostel:"Aravali",house:"",phone:"6005851908",email:"gouravsharma@gmail.com",img:"",fatherName:"SANJEEV KUMAR SHARMA",motherName:"PINKY SHARMA",address:"W.NO. VILL. BIGWAN P.O. JAKHWAR TESHIL & DISTT. KATHUA PIN. 184014"},
+    {admissionNo:"2610",name:"KESHAV SHARMA",class:"XII A",hostel:"Aravali",house:"",phone:"9622394351",email:"keshavsharma@gmail.com",img:"",fatherName:"GULSHAN KUMAR",motherName:"SHIVANI SHARMA",address:"VPO. DHANNI BAKHTO (BHORTHAIN) TESHIL & DISTT. KATHUA PIN. 184143"},
+    {admissionNo:"2600",name:"NEERAJ KUMAR",class:"XII A",hostel:"Aravali",house:"",phone:"7006766723",email:"neerajkumar@gmail.com",img:"",fatherName:"HANSRAJ",motherName:"PINKI DEVI",address:"JANOTA PO SUKRALA BILLAWAR KATHUA 184201"},
+    {admissionNo:"2626",name:"VARUN THAKUR",class:"XII A",hostel:"Aravali",house:"",phone:"8493016411",email:"varunthakur@gmail.com",img:"",fatherName:"RAJINDER SINGH",motherName:"REVA DEVI",address:"CHUNERA MAHANUPUR KATHUA 184202"},
+    {admissionNo:"2592",name:"BALJEET SINGH",class:"XII B",hostel:"Aravali",house:"",phone:"9797310808",email:"baljeetsingh@gmail.com",img:"",fatherName:"KAKU RAM",motherName:"GUDDO DEVI",address:"SALLON BASOHLI KATHUA 184201"},
+    {admissionNo:"2640",name:"KARUN NAGOTRA",class:"XII B",hostel:"Aravali",house:"",phone:"7889526778",email:"karunnagotra@gmail.com",img:"",fatherName:"JAGDEV SINGH",motherName:"ANJU BALA",address:"MAHANPUR KATHUA 184201"},
+    {admissionNo:"2665",name:"KASHORE SINGH",class:"XII B",hostel:"Aravali",house:"",phone:"9589420782",email:"kashoresingh@gmail.com",img:"",fatherName:"OMKAR CHAND",motherName:"NEELAM DEVI",address:"BILLAWAR KATHUA 184204"},
+    {admissionNo:"2663",name:"PARSHANT KALANDRY",class:"XII B",hostel:"Aravali",house:"",phone:"9906278090",email:"parshantkalandry@gmail.com",img:"",fatherName:"DARSHAN KUMAR",motherName:"ANJU DEVI",address:"BANI KATHUA 184206"},
+    {admissionNo:"2719",name:"MOHD ASHFAQ",class:"XI B",hostel:"Aravali",house:"",phone:"7006248376",email:"mohdashfaq@gmail.com",img:"",fatherName:"BIRU DIN",motherName:"KHURSHEDA AKHTER",address:"VILL. NAJOTE, PO. SUKRALA DEVI, TESHIL. MALHAR DISTT. KATHUA PIN. 184204"},
+    {admissionNo:"2699",name:"PARUL VERMA",class:"XI A",hostel:"Aravali",house:"",phone:"8082056035",email:"parulverma@gmail.com",img:"",fatherName:"NEK RAM",motherName:"BHOLI DEVI",address:"VILL. GHODAL, BLOCK. MAHANPUR DISTT. KATHUA PIN. 184201"},
+    {admissionNo:"2798",name:"MUKESH SINGH",class:"X A",hostel:"Aravali",house:"",phone:"9622050730",email:"mukeshsingh@gmail.com",img:"",fatherName:"DEALK RAM",motherName:"MEEMO DEVI",address:"WARD NO. 1 NEAR GHSS  BADNOTA, TESHIL. BILLAWAR BADNOTIA  DISTT. KATHUA PIN.184204"},
+    {admissionNo:"2702",name:"ARNAV BILLAWRIA",class:"XI A",hostel:"Aravali",house:"",phone:"9419245990",email:"arnavbillawria@gmail.com",img:"",fatherName:"AMARJEET SINGH",motherName:"NAMRITA SLATHIA",address:"R/O. BUDHI BLOCK BARNOTI DISTT. KATHUA PIN. 184143"},
+    {admissionNo:"2734",name:"RAVI KUMAR",class:"XI B ",hostel:"Aravali",house:"",phone:"9622359875",email:"ravikumar@gmail.com",img:"",fatherName:"JOGINDER PAUL",motherName:"GOURA DEVI",address:"VPO. GURHA KALIAL TESHIL. RAMKOT DISTT. KAHTUA PIN. 184210"},
+    {admissionNo:"2749",name:"SHIVAM KUMAR",class:"XI B",hostel:"Aravali",house:"",phone:"7051490461",email:"shivamkumar@gmail.com",img:"",fatherName:"PALVINDER KUMAR",motherName:"CHANCHAL DEVI",address:"VPO. MARHEEN DISTT. KATHUA PIN. 184148"},
+    {admissionNo:"2788",name:"NISHANT SHARMA",class:"X A",hostel:"Aravali",house:"",phone:"7298197597",email:"nishantsharma@gmail.com",img:"",fatherName:"PAWAN KUMAR",motherName:"KIRNA DEVI",address:"VPO. MAHANPUR , TESHIL. MAHANPUR, DISTT. KATHUA PIN. 184202"},
+    {admissionNo:"2784",name:"SOURAV SINGH",class:"X B",hostel:"Aravali",house:"",phone:"9682574896",email:"souravsingh@gmail.com",img:"",fatherName:"RAMESH SINGH",motherName:"JYOTI DEVI",address:"VILL. PCAHI, TESHIL. BASOHLI, DISTT. KATHUA PIN. 184201"},
+    {admissionNo:"5048",name:"KARAN",class:"XI C",hostel:"Aravali",house:"",phone:"7298425209",email:"karan@gmail.com",img:"",fatherName:"SOM RAJ",motherName:"SATYA DEVI",address:"R/O VPO BANI, TEHSIL BANI DISTT. KATHUA (JK)-184206"},
+    {admissionNo:"2868",name:"AMARIS",class:"IX A",hostel:"Aravali",house:"",phone:"9541390200",email:"amaris@gmail.com",img:"",fatherName:"UDHAYBIR SINGH",motherName:"RAJNEE DEVI",address:"WARD NO 09, VPO & TEHSIL, NAGRI PAROLE, DISTT. KATHUA-184151"},
+    {admissionNo:"2828",name:"RIDHAM LONI",class:"X A",hostel:"Aravali",house:"",phone:"6005238677",email:"ridhamloni@gmail.com",img:"",fatherName:"RAKESH KUMAR",motherName:"REKHA RANI",address:"VPO. KHANPUR, TESHIL. MARHEEN, DISTT. KATHUA PIN. 184148"},
   ];
   localStorage.setItem("students_seed_v2", JSON.stringify(students));
 }
@@ -897,5 +930,6 @@ window.downloadStudentLeave = downloadStudentLeave;
 </script>
 </body>
 </html>
+
 
 
