@@ -951,7 +951,36 @@ $("#logoutBtn").addEventListener("click", ()=>{
 /* ==========================
    START APP
 ========================== */
-function startApp(){
+
+  
+</script>
+  <!-- ✅ Separate script for Load Student Data -->
+<script>
+function loadStudentData() {
+  if (!confirm("Are you sure you want to load the latest student data?\nक्या आप निश्चित हैं कि आप नया छात्र डेटा लोड करना चाहते हैं?")) return;
+  if (!confirm("This will replace the old student data.\nयह पुराने छात्र डेटा को बदल देगा।")) return;
+  if (!confirm("Final confirmation — proceed?\nअंतिम पुष्टि — क्या आप आगे बढ़ना चाहते हैं?")) return;
+
+  try {
+    // Use latest array from code
+    if (window.students && Array.isArray(window.students) && window.students.length > 0) {
+      // Replace old data in localStorage
+      localStorage.removeItem("students_seed_v2");
+      localStorage.setItem("students_seed_v2", JSON.stringify(window.students));
+
+      alert("✅ Latest student data updated successfully!\nनया छात्र डेटा सफलतापूर्वक अपडेट हो गया!");
+
+      // Refresh page after short delay
+      setTimeout(() => location.reload(), 800);
+    } else {
+      alert("⚠️ No student list found in code.\nकोड में छात्र सूची नहीं मिली।");
+    }
+  } catch (e) {
+    console.error("Error updating student data:", e);
+    alert("❌ Error updating data.\nडेटा अपडेट करते समय त्रुटि हुई।");
+  }
+}
+  function startApp(){
   // Toggle views
   $("#loginView").style.display = "none";
   $("#app").style.display = "block";
@@ -975,40 +1004,10 @@ if(session && session.role){
 }else{
   $("#loginView").style.display = "grid";
 }
-  
-</script>
-  <!-- ✅ Separate script for Load Student Data -->
-<script>
-function loadStudentData() {
-  try {
-    // Triple bilingual confirmation
-    if (!confirm("Are you sure you want to load student data?\nक्या आप निश्चित हैं कि आप छात्र डेटा लोड करना चाहते हैं?")) return;
-    if (!confirm("This will overwrite existing data.\nयह मौजूदा डेटा को अधिलेखित कर देगा।")) return;
-    if (!confirm("Final confirmation — proceed?\nअंतिम पुष्टि — क्या आप आगे बढ़ना चाहते हैं?")) return;
-
-    // Access global student array
-    if (window.students && Array.isArray(window.students) && window.students.length > 0) {
-      localStorage.setItem("students_seed_v2", JSON.stringify(window.students));
-      alert("✅ Student data loaded successfully!\nछात्र डेटा सफलतापूर्वक लोड हो गया!");
-
-      // Refresh student list or reload if not logged in yet
-      if (typeof renderStudentList === "function") {
-        renderStudentList();
-      } else {
-        setTimeout(() => location.reload(), 500);
-      }
-    } else {
-      alert("⚠️ No student data found in code.\nकोड में कोई छात्र डेटा नहीं मिला।");
-    }
-
-  } catch (err) {
-    console.error("Error loading student data:", err);
-    alert("❌ Error loading data.\nडेटा लोड करते समय त्रुटि हुई।");
-  }
-}
 </script>
 </body>
 </html>
+
 
 
 
