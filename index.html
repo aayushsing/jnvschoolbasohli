@@ -297,7 +297,7 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
       <input type="file" id="uploadExcel" accept=".xlsx,.xls" class="hidden">
       <button id="exportStudentsBtn" class="rbac r-teacher1 r-teacher2">⬇️ Export Students</button>
       <!-- NEW BUTTON: Load Student Data (placed at bottom of sidebar group as requested) -->
-      <button id="loadStudentDataBtn">📥 Load Student Data</button>
+      <button class="menu-btn" onclick="loadStudentData()">📥 Load Student Data</button>
     </div>
   </aside>
 
@@ -975,35 +975,40 @@ if(session && session.role){
 }else{
   $("#loginView").style.display = "grid";
 }
-  window.downloadStudentLeave = downloadStudentLeave;
+  
+</script>
+  <!-- ✅ Separate script for Load Student Data -->
+<script>
 function loadStudentData() {
-  // 3 bilingual confirmations
-  if (!confirm("Are you sure you want to load student data?\nक्या आप निश्चित हैं कि आप छात्र डेटा लोड करना चाहते हैं?")) return;
-  if (!confirm("This will overwrite existing data.\nयह मौजूदा डेटा को अधिलेखित कर देगा।")) return;
-  if (!confirm("Final confirmation — proceed?\nअंतिम पुष्टि — क्या आप आगे बढ़ना चाहते हैं?")) return;
-
   try {
-    // Use the same students array that already exists in your code
-    if (students && Array.isArray(students) && students.length > 0) {
-      localStorage.setItem("students_seed_v2", JSON.stringify(students));
+    // Triple bilingual confirmation
+    if (!confirm("Are you sure you want to load student data?\nक्या आप निश्चित हैं कि आप छात्र डेटा लोड करना चाहते हैं?")) return;
+    if (!confirm("This will overwrite existing data.\nयह मौजूदा डेटा को अधिलेखित कर देगा।")) return;
+    if (!confirm("Final confirmation — proceed?\nअंतिम पुष्टि — क्या आप आगे बढ़ना चाहते हैं?")) return;
+
+    // Access global student array
+    if (window.students && Array.isArray(window.students) && window.students.length > 0) {
+      localStorage.setItem("students_seed_v2", JSON.stringify(window.students));
       alert("✅ Student data loaded successfully!\nछात्र डेटा सफलतापूर्वक लोड हो गया!");
 
-      // Immediately refresh the list
+      // Refresh student list or reload if not logged in yet
       if (typeof renderStudentList === "function") {
-        renderStudentList(); // update without reload
+        renderStudentList();
       } else {
-        location.reload();   // fallback if no render function found
+        setTimeout(() => location.reload(), 500);
       }
     } else {
       alert("⚠️ No student data found in code.\nकोड में कोई छात्र डेटा नहीं मिला।");
     }
-  } catch (e) {
-    console.error("Error loading data:", e);
+
+  } catch (err) {
+    console.error("Error loading student data:", err);
     alert("❌ Error loading data.\nडेटा लोड करते समय त्रुटि हुई।");
   }
-
+}
 </script>
 </body>
 </html>
+
 
 
