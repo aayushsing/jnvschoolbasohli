@@ -980,7 +980,35 @@ if(session && session.role){
    GLOBAL EXPOSE (Excel helpers used in cards)
 ========================== */
 window.downloadStudentLeave = downloadStudentLeave;
+  <!-- ✅ FIX: working mobile-friendly Load Student Data -->
+<script>
+function loadStudentData() {
+  // 3 bilingual confirmations
+  if (!confirm("Are you sure you want to load student data?\nक्या आप निश्चित हैं कि आप छात्र डेटा लोड करना चाहते हैं?")) return;
+  if (!confirm("This will overwrite existing data.\nयह मौजूदा डेटा को अधिलेखित कर देगा।")) return;
+  if (!confirm("Final confirmation — proceed?\nअंतिम पुष्टि — क्या आप आगे बढ़ना चाहते हैं?")) return;
+
+  try {
+    // Use the same students array that already exists in your code
+    if (students && Array.isArray(students) && students.length > 0) {
+      localStorage.setItem("students_seed_v2", JSON.stringify(students));
+      alert("✅ Student data loaded successfully!\nछात्र डेटा सफलतापूर्वक लोड हो गया!");
+
+      // Immediately refresh the list
+      if (typeof renderStudentList === "function") {
+        renderStudentList(); // update without reload
+      } else {
+        location.reload();   // fallback if no render function found
+      }
+    } else {
+      alert("⚠️ No student data found in code.\nकोड में कोई छात्र डेटा नहीं मिला।");
+    }
+  } catch (e) {
+    console.error("Error loading data:", e);
+    alert("❌ Error loading data.\nडेटा लोड करते समय त्रुटि हुई।");
+  }
 
 </script>
 </body>
 </html>
+
