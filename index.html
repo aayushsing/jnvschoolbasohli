@@ -200,11 +200,11 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
   .appbar h1{ font-size: .9rem; max-width: 52vw; }
   .menu-btn{ padding: 6px 8px; font-size: .9rem; }
   .badge{ font-size: .7rem; padding: 3px 7px; }
-  
+
   .login-card{ width: 95vw; padding: 16px 14px; }
   .login-card h2{ font-size: 1rem; line-height: 1.2; }
   input, select, button{ font-size: .9rem; padding: 9px 10px; }
-  
+
   /* Cards compress a bit better */
   .grid{ grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
   .card{ padding: 12px; }
@@ -212,7 +212,7 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
 
   /* Filters wrap tighter without overflowing */
   .filters{ gap: 8px; }
-  
+
   /* Drawer a hair narrower on tiny screens */
   .drawer{ width: 280px; }
 }
@@ -296,6 +296,8 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
       <button id="uploadBtn" class="rbac r-teacher1">⬆️ Upload Students Excel</button>
       <input type="file" id="uploadExcel" accept=".xlsx,.xls" class="hidden">
       <button id="exportStudentsBtn" class="rbac r-teacher1 r-teacher2">⬇️ Export Students</button>
+      <!-- NEW BUTTON: Load Student Data (placed at bottom of sidebar group as requested) -->
+      <button id="loadStudentDataBtn">📥 Load Student Data</button>
     </div>
   </aside>
 
@@ -735,12 +737,32 @@ function downloadLeaveHistory(){
   XLSX.writeFile(wb, "LeaveHistory.xlsx");
 }
 
+// Ensure a robust downloadStudentLeave available (overrides any previous)
 function downloadStudentLeave(admissionNo){
-  const sLeaves = leaves.filter(l=>l.admissionNo===admissionNo);
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(sLeaves);
-  XLSX.utils.book_append_sheet(wb, ws, "Leaves");
-  XLSX.writeFile(wb, `Leaves_${admissionNo}.xlsx`);
+  try{
+    const sLeaves = leaves.filter(l=>l.admissionNo===admissionNo);
+    if(!sLeaves || sLeaves.length === 0){
+      alert("No leave records found for this student.\nइस छात्र के लिए कोई अवकाश रिकॉर्ड नहीं मिला।");
+      return;
+    }
+    const wb = XLSX.utils.book_new();
+    // Normalize objects to ensure consistent columns
+    const normalized = sLeaves.map(l => ({
+      admissionNo: l.admissionNo || "",
+      type: l.type || "",
+      from: l.from || "",
+      to: l.to || "",
+      reason: l.reason || "",
+      parent: l.parent || "",
+      dateApplied: l.date || ""
+    }));
+    const ws = XLSX.utils.json_to_sheet(normalized);
+    XLSX.utils.book_append_sheet(wb, ws, "Leaves");
+    XLSX.writeFile(wb, `Leaves_${admissionNo}.xlsx`);
+  }catch(err){
+    console.error("downloadStudentLeave error:", err);
+    alert("Error downloading leaves.\nअवकाश डाउनलोड करने में त्रुटि।");
+  }
 }
 
 /* ==========================
@@ -873,6 +895,37 @@ $("#exportStudentsBtn").addEventListener("click", ()=>{
 });
 
 /* ==========================
+   LOAD STUDENT DATA BUTTON (3 confirmations, bilingual prompts)
+   This is the new functionality requested: it saves the in-code `students` array
+   into localStorage key `students_seed_v2` after asking three confirmations.
+========================== */
+$("#loadStudentDataBtn").addEventListener("click", ()=>{
+  // Confirmation 1
+  const c1 = confirm("Are you sure you want to load student data? / क्या आप छात्र डेटा लोड करना चाहते हैं?");
+  if(!c1) return;
+  // Confirmation 2
+  const c2 = confirm("This will replace the current student list in local storage. Continue? / यह लोकल स्टोरेज में वर्तमान छात्र सूची को बदल देगा। क्या जारी रखें?");
+  if(!c2) return;
+  // Confirmation 3
+  const c3 = confirm("Final confirmation — load data now? / अंतिम पुष्टि — क्या अभी डेटा लोड करें?");
+  if(!c3) return;
+
+  try{
+    // Save only student list to the same key used in the app.
+    localStorage.setItem("students_seed_v2", JSON.stringify(students));
+    // Re-load into the running variable in case user had navigated earlier.
+    students = JSON.parse(localStorage.getItem("students_seed_v2") || "[]");
+    // Refresh UI (students list)
+    filterStudents();
+    // Show success bilingual message
+    alert("✅ Student data loaded successfully! / छात्र डेटा सफलतापूर्वक लोड हो गया!");
+  }catch(err){
+    console.error(err);
+    alert("Error saving student data. / छात्र डेटा सहेजने में त्रुटि।");
+  }
+});
+
+/* ==========================
    DOWNLOAD BUTTONS
 ========================== */
 $("#downloadLeaveHistoryBtn").addEventListener("click", downloadLeaveHistory);
@@ -931,9 +984,3 @@ window.downloadStudentLeave = downloadStudentLeave;
 </script>
 </body>
 </html>
-
-
-
-
-
-
