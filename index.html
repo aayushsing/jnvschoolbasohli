@@ -975,13 +975,7 @@ if(session && session.role){
 }else{
   $("#loginView").style.display = "grid";
 }
-
-/* ==========================
-   GLOBAL EXPOSE (Excel helpers used in cards)
-========================== */
-window.downloadStudentLeave = downloadStudentLeave;
-  <!-- ✅ FIX: working mobile-friendly Load Student Data -->
-<script>
+  window.downloadStudentLeave = downloadStudentLeave;
 function loadStudentData() {
   // 3 bilingual confirmations
   if (!confirm("Are you sure you want to load student data?\nक्या आप निश्चित हैं कि आप छात्र डेटा लोड करना चाहते हैं?")) return;
@@ -1011,4 +1005,5 @@ function loadStudentData() {
 </script>
 </body>
 </html>
+
 
