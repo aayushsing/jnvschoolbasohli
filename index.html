@@ -164,6 +164,7 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
 @media (max-width: 560px){
   .kv{grid-template-columns:82px 1fr}
 }
+
 /* --- Logo: smaller & circular --- */
 .appbar .logo,
 .login-card .logo,
@@ -187,7 +188,7 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
   margin: 0; 
   font-weight: 700; 
   letter-spacing: .2px;
-  max-width: 55vw;           /* keep it from pushing controls off-screen */
+  max-width: 55vw;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -216,7 +217,8 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
   /* Drawer a hair narrower on tiny screens */
   .drawer{ width: 280px; }
 }
-  /* --- Small running name (marquee) next to "Signed in as" --- */
+
+/* --- Small running name (marquee) next to "Signed in as" --- */
 .ticker{
   display:inline-flex; align-items:center; gap:8px;
   border:1px solid var(--stroke); border-radius:999px;
@@ -235,12 +237,8 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
   .ticker{ max-width:58vw; padding:5px 8px; }
   .ticker span{ font-size:.8rem; }
 }
-
-
-
 </style>
 </head>
-</script>
 <body>
 
 <!-- LOGIN VIEW -->
@@ -255,6 +253,7 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
 
     <label>Email / Admission No</label>
     <input id="email" placeholder="e.g. sankalp@gmail.com or JNVT001" autocomplete="username" />
+
     <div class="row">
       <div style="flex:2">
         <label>Password</label>
@@ -264,6 +263,9 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
         <button class="primary" style="width:100%" id="loginBtn">Login</button>
       </div>
     </div>
+
+    <!-- login error -->
+    <div id="loginError" class="helper" style="color:#ff4d4d; display:none;"></div>
   </div>
 </section>
 
@@ -296,8 +298,8 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
       <button id="uploadBtn" class="rbac r-teacher1">⬆️ Upload Students Excel</button>
       <input type="file" id="uploadExcel" accept=".xlsx,.xls" class="hidden">
       <button id="exportStudentsBtn" class="rbac r-teacher1 r-teacher2">⬇️ Export Students</button>
-      <!-- NEW BUTTON: Load Student Data (placed at bottom of sidebar group as requested) -->
-      <button class="menu-btn" onclick="loadStudentData()">📥 Load Student Data</button>
+      <!-- Load Student Data from core list -->
+      <button class="menu-btn rbac r-teacher1" onclick="loadStudentData()">📥 Load Student Data</button>
     </div>
   </aside>
 
@@ -306,14 +308,37 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
     <div class="toolbar">
       <div id="whoami" class="pill">Signed in as: <span id="whoamiText">—</span></div>
       <div class="ticker" aria-label="School name">
-  <span>Pm Shri Jawahar Navodaya Vidyalaya Basohli pincode 184201 • Pm Shri Jawahar Navodaya Vidyalaya Basohli pincode 184201 • </span>
-</div>
-
+        <span>Pm Shri Jawahar Navodaya Vidyalaya Basohli pincode 184201 • Pm Shri Jawahar Navodaya Vidyalaya Basohli pincode 184201 • </span>
+      </div>
     </div>
 
     <!-- Students -->
     <section id="students" class="section active">
       <h2>Students</h2>
+
+      <!-- Manual add student (Teacher1 only) -->
+      <div id="addStudentPanel" class="card rbac r-teacher1" style="margin-bottom:14px;">
+        <h3 style="margin-top:0;">Add Student (Teacher1 only)</h3>
+        <div class="filters">
+          <input id="newAdmissionNo" placeholder="Admission No" />
+          <input id="newStudentName" placeholder="Name" />
+          <input id="newClass" placeholder="Class (e.g. IX A)" />
+          <select id="newHostel">
+            <option value="">Hostel</option>
+            <option>Aravali</option>
+            <option>Nilgiri</option>
+            <option>Shivalik</option>
+            <option>Udaigiri</option>
+          </select>
+          <input id="newPhone" placeholder="Phone" />
+          <input id="newEmail" placeholder="Email" />
+          <input id="newFather" placeholder="Father Name" />
+          <input id="newMother" placeholder="Mother Name" />
+          <input id="newAddress" placeholder="Address" style="flex:1 1 100%;" />
+          <button id="addStudentBtn" class="primary">Add Student</button>
+        </div>
+      </div>
+
       <div class="filters">
         <input id="studentSearch" placeholder="Search by name or admission no" />
         <select id="hostelFilter">
@@ -323,6 +348,7 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
           <option>Shivalik</option>
           <option>Udaigiri</option>
         </select>
+        <!-- house filter kept (if needed), but card no longer shows house -->
         <select id="houseFilter">
           <option value="">All Houses</option>
           <option>Blue</option>
@@ -403,6 +429,8 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
+"use strict";
+
 /* ==========================
    DATA (demo only – replace with server in production)
 ========================== */
@@ -416,53 +444,72 @@ const users = [
   {email:"parent@gmail.com",    password:"1234", role:"parent",   admissionNo:"JNVT001", name:"Parent of Aayush"}
 ];
 
+/* core student list (source of truth in code) */
+const coreStudents = [
+  {admissionNo:"2912",name:"HARI NIHAR",class:"IX A",hostel:"Aravali",house:"",phone:"7780851610",email:"harinihar@gmail.com",img:"",fatherName:"SANJEEV KUMAR",motherName:"MEENIKSHI MEHRA",address:"V.P.O BHADDU TESHIL BILLAWAR DIST KATHU"},
+  {admissionNo:"2904",name:"MOHIT KUMAR",class:"IX A",hostel:"Aravali",house:"",phone:"7889519688",email:"mohitkumar@gmail.com",img:"",fatherName:"SHAM LAL",motherName:"TOSHI DEVI",address:"V.P.O JARNOTA TESHIL BASOHLI DIST KATHUA"},
+  {admissionNo:"2960",name:"SHARAB AHMED MALIK",class:"IX A",hostel:"Aravali",house:"",phone:"7006458872",email:"sharabahmedmalik@gmail.com",img:"",fatherName:"SHABIR AHMED",motherName:"BUSHRAY BEGUM",address:"VILLAGE BADNOTA TEH LOHAI MALHAR,DIST KATHUA"},
+  {admissionNo:"2891",name:"SPARSH SINGH",class:"IX A",hostel:"Aravali",house:"",phone:"7006195102",email:"sparshsingh@gmail.com",img:"",fatherName:"RAJENDAR",motherName:"RANJANA PUNIA",address:"VILLAGE KALARI TESHIL KATHUA DIST KATHUA"},
+  {admissionNo:"2917",name:"SUDHANSHU SONI",class:"IX A",hostel:"Aravali",house:"",phone:"9541344600",email:"sudhanshusoni@gmail.com",img:"",fatherName:"MANGU RAM",motherName:"SUSHMA DEVI",address:"V.P.O PANDORI,TEHSIL NAGRI PAROLE,DISTRICT KATHUA,JAMMU &KASHMIR,"},
+  {admissionNo:"2875",name:"VANSHIK MANKOTIA",class:"IX A",hostel:"Aravali",house:"",phone:"9622129129",email:"vanshikmankotia@gmail.com",img:"",fatherName:"GURDEV SINGH",motherName:"SHILPY RAJPUT",address:"VILLAGE BAKTHPUR TESHIL BILLAWAR DIST KATHUA"},
+  {admissionNo:"4054",name:"DAKSH VERMA",class:"IX A",hostel:"Aravali",house:"",phone:"9622492267",email:"dakshverma@gmail.com",img:"",fatherName:"SATISHKUMAR",motherName:"RANIDEVI",address:"V.P.O JARNOTA TESHIL BASOHLI DIST KATHUA"},
+  {admissionNo:"4056",name:"PRINCE VERMA",class:"IX B",hostel:"Aravali",house:"",phone:"9622218975",email:"princeverma@gmail.com",img:"",fatherName:" MINTU KUMAR",motherName:" POONAM DEVI",address:"VILL. DRAMAN, TEHSIL BASOHLI, P/O DRAMAN,KATHUA, J&K, 184201"},
+  {admissionNo:"2840",name:"DHEERAJ SHARMA",class:"X A",hostel:"Aravali",house:"",phone:"9419129902",email:"dheerajsharma@gmail.com",img:"",fatherName:" RAM PARSHAD",motherName:" KAILASH",address:"VILL. MEARTH, P.O. BUDHI, TESHIL & DISTT. KATHUA PIN. 184143"},
+  {admissionNo:"2781",name:"MANIK BOURNEY",class:"X A",hostel:"Aravali",house:"",phone:"9697175274",email:"manikbourney@gmail.com",img:"",fatherName:" TILAK RAJ",motherName:" SAMBO DEVI",address:"WARD NO. 3 NEAR GMS DADWARA, P.O. BHADDU, TESHIL. BILLAWAR, DISTT. KATHUA PIN. 184203"},
+  {admissionNo:"2855",name:"BHANU PARTAP",class:"X B",hostel:"Aravali",house:"",phone:"7889583545",email:"bhanupartap@gmail.com",img:"",fatherName:"LAJJAY RAM",motherName:"RANI DEVI",address:"VPO. NAGRI PAROLE TESHIL. NAGRI PAROLE, DISTT. KATHUA PIN. 184151"},
+  {admissionNo:"2803",name:"DHEERAJ BHAGAT",class:"X B",hostel:"Aravali",house:"",phone:"9622320075",email:"dheerajbhagat@gmail.com",img:"",fatherName:"PARSHOTAM LAL",motherName:"ANJANA DEVI",address:"VILL. JAGATPUR MARHEEN, TESHIL. MARHEEN DISTT. KATHUA PIN. 184148"},
+  {admissionNo:"4024",name:"DHRUB KESAR",class:"X B",hostel:"Aravali",house:"",phone:"6005268289",email:"dhrubkesar@gmail.com",img:"",fatherName:"PAWAN KUMAR",motherName:"SUSHMA DEVI",address:"VILL. KATHEEL DHANGU TESHIL.  MAJALTA DISTT. UDHAMPUR, P.O PEOUNI PIN. 182117"},
+  {admissionNo:"2815",name:"GAJIT KUMAR",class:"X B",hostel:"Aravali",house:"",phone:"7006236041",email:"gajitkumar@gmail.com",img:"",fatherName:"NARESH KUMAR",motherName:"SONU DEVI",address:"WARD NO. 3 VILL SANOHI P.O. TAPPER, TESHIL BANI, DISTT. KATHUA PIN. 184206"},
+  {admissionNo:"2854",name:"MAHEE BILLOWRIA",class:"X B",hostel:"Aravali",house:"",phone:"9697162402",email:"maheebillowria@gmail.com",img:"",fatherName:"HARDEEP SINGH",motherName:"NEERAJ BALA",address:"VILL. BARWAL, TESHIL & DISTT. KATHUA PIN. 184143"},
+  {admissionNo:"2797",name:"RUDRA VERMA",class:"X B",hostel:"Aravali",house:"",phone:"6005238677",email:"rudraverma@gmail.com",img:"",fatherName:"RAKESH KUMAR",motherName:"REKHA RANI",address:"VPO. KHANPUR, TESHIL. MARHEEN, DISTT. KATHUA PIN. 184148"},
+  {admissionNo:"2827",name:"SANGAM FACKOLU",class:"X B",hostel:"Aravali",house:"",phone:"9149710375",email:"sangamfackolu@gmail.com",img:"",fatherName:"MUKESH KUMAR",motherName:"VEENA DEVI",address:"WARD NO. 5, NEAR SHIV TEMPLE, VILL. THANA, P.O. PLASSI, TESHIL. BASOHLI DISTT. KATHUA PIN.184201"},
+  {admissionNo:"2762",name:"ARYAN SATYAL",class:"XI C",hostel:"Aravali",house:"",phone:"6006512829",email:"aryansatyal@gmail.com",img:"",fatherName:"JEET KUMAR",motherName:"SUSHMA RANI",address:"R/O NANAN P/O GHATI TESHIL& DISTT. KATHUA PIN. 184201"},
+  {admissionNo:"2733",name:"PUSHPAL SINGH",class:"XI B",hostel:"Aravali",house:"",phone:"9149664731",email:"pushpalsingh@gmail.com",img:"",fatherName:"SANJAY SINGH",motherName:"PINKY DEVI",address:"VPO. MALHAR TESHIL. LOHAI-MALHAR DISTT. KATHUA PIN. 184204"},
+  {admissionNo:"2709",name:"RAJESH KATAL",class:"XI B",hostel:"Aravali",house:"",phone:"7298356210",email:"rajeshkatal@gmail.com",img:"",fatherName:"KAKA RAM KATAL",motherName:"KANTA DEVI",address:"VPO. WNO. POONDA TESHIL. MAHANPUR DISTT. KATHUA PIN. 184201"},
+  {admissionNo:"2603",name:"DEEP KUMAR",class:"XII A",hostel:"Aravali",house:"",phone:"8082206251",email:"deepkumar@gmail.com",img:"",fatherName:"OM PRAKASH",motherName:"SUSHMA DEVI",address:"SERU BANI KATHUA 184206"},
+  {admissionNo:"2866",name:"GOURAV SHARMA",class:"XII A",hostel:"Aravali",house:"",phone:"6005851908",email:"gouravsharma@gmail.com",img:"",fatherName:"SANJEEV KUMAR SHARMA",motherName:"PINKY SHARMA",address:"W.NO. VILL. BIGWAN P.O. JAKHWAR TESHIL & DISTT. KATHUA PIN. 184014"},
+  {admissionNo:"2610",name:"KESHAV SHARMA",class:"XII A",hostel:"Aravali",house:"",phone:"9622394351",email:"keshavsharma@gmail.com",img:"",fatherName:"GULSHAN KUMAR",motherName:"SHIVANI SHARMA",address:"VPO. DHANNI BAKHTO (BHORTHAIN) TESHIL & DISTT. KATHUA PIN. 184143"},
+  {admissionNo:"2600",name:"NEERAJ KUMAR",class:"XII A",hostel:"Aravali",house:"",phone:"7006766723",email:"neerajkumar@gmail.com",img:"",fatherName:"HANSRAJ",motherName:"PINKI DEVI",address:"JANOTA PO SUKRALA BILLAWAR KATHUA 184201"},
+  {admissionNo:"2626",name:"VARUN THAKUR",class:"XII A",hostel:"Aravali",house:"",phone:"8493016411",email:"varunthakur@gmail.com",img:"",fatherName:"RAJINDER SINGH",motherName:"REVA DEVI",address:"CHUNERA MAHANUPUR KATHUA 184202"},
+  {admissionNo:"2592",name:"BALJEET SINGH",class:"XII B",hostel:"Aravali",house:"",phone:"9797310808",email:"baljeetsingh@gmail.com",img:"",fatherName:"KAKU RAM",motherName:"GUDDO DEVI",address:"SALLON BASOHLI KATHUA 184201"},
+  {admissionNo:"2640",name:"KARUN NAGOTRA",class:"XII B",hostel:"Aravali",house:"",phone:"7889526778",email:"karunnagotra@gmail.com",img:"",fatherName:"JAGDEV SINGH",motherName:"ANJU BALA",address:"MAHANPUR KATHUA 184201"},
+  {admissionNo:"2665",name:"KASHORE SINGH",class:"XII B",hostel:"Aravali",house:"",phone:"9589420782",email:"kashoresingh@gmail.com",img:"",fatherName:"OMKAR CHAND",motherName:"NEELAM DEVI",address:"BILLAWAR KATHUA 184204"},
+  {admissionNo:"2663",name:"PARSHANT KALANDRY",class:"XII B",hostel:"Aravali",house:"",phone:"9906278090",email:"parshantkalandry@gmail.com",img:"",fatherName:"DARSHAN KUMAR",motherName:"ANJU DEVI",address:"BANI KATHUA 184206"},
+  {admissionNo:"2719",name:"MOHD ASHFAQ",class:"XI B",hostel:"Aravali",house:"",phone:"7006248376",email:"mohdashfaq@gmail.com",img:"",fatherName:"BIRU DIN",motherName:"KHURSHEDA AKHTER",address:"VILL. NAJOTE, PO. SUKRALA DEVI, TESHIL. MALHAR DISTT. KATHUA PIN. 184204"},
+  {admissionNo:"2699",name:"PARUL VERMA",class:"XI A",hostel:"Aravali",house:"",phone:"8082056035",email:"parulverma@gmail.com",img:"",fatherName:"NEK RAM",motherName:"BHOLI DEVI",address:"VILL. GHODAL, BLOCK. MAHANPUR DISTT. KATHUA PIN. 184201"},
+  {admissionNo:"2798",name:"MUKESH SINGH",class:"X A",hostel:"Aravali",house:"",phone:"9622050730",email:"mukeshsingh@gmail.com",img:"",fatherName:"DEALK RAM",motherName:"MEEMO DEVI",address:"WARD NO. 1 NEAR GHSS  BADNOTA, TESHIL. BILLAWAR BADNOTIA  DISTT. KATHUA PIN.184204"},
+  {admissionNo:"2702",name:"ARNAV BILLAWRIA",class:"XI A",hostel:"Aravali",house:"",phone:"9419245990",email:"arnavbillawria@gmail.com",img:"",fatherName:"AMARJEET SINGH",motherName:"NAMRITA SLATHIA",address:"R/O. BUDHI BLOCK BARNOTI DISTT. KATHUA PIN. 184143"},
+  {admissionNo:"2734",name:"RAVI KUMAR",class:"XI B ",hostel:"Aravali",house:"",phone:"9622359875",email:"ravikumar@gmail.com",img:"",fatherName:"JOGINDER PAUL",motherName:"GOURA DEVI",address:"VPO. GURHA KALIAL TESHIL. RAMKOT DISTT. KAHTUA PIN. 184210"},
+  {admissionNo:"2749",name:"SHIVAM KUMAR",class:"XI B",hostel:"Aravali",house:"",phone:"7051490461",email:"shivamkumar@gmail.com",img:"",fatherName:"PALVINDER KUMAR",motherName:"CHANCHAL DEVI",address:"VPO. MARHEEN DISTT. KATHUA PIN. 184148"},
+  {admissionNo:"2788",name:"NISHANT SHARMA",class:"X A",hostel:"Aravali",house:"",phone:"7298197597",email:"nishantsharma@gmail.com",img:"",fatherName:"PAWAN KUMAR",motherName:"KIRNA DEVI",address:"VPO. MAHANPUR , TESHIL. MAHANPUR, DISTT. KATHUA PIN. 184202"},
+  {admissionNo:"2784",name:"SOURAV SINGH",class:"X B",hostel:"Aravali",house:"",phone:"9682574896",email:"souravsingh@gmail.com",img:"",fatherName:"RAMESH SINGH",motherName:"JYOTI DEVI",address:"VILL. PCAHI, TESHIL. BASOHLI, DISTT. KATHUA PIN. 184201"},
+  {admissionNo:"5048",name:"KARAN",class:"XI C",hostel:"Aravali",house:"",phone:"7298425209",email:"karan@gmail.com",img:"",fatherName:"SOM RAJ",motherName:"SATYA DEVI",address:"R/O VPO BANI, TEHSIL BANI DISTT. KATHUA (JK)-184206"},
+  {admissionNo:"2868",name:"AMARIS",class:"IX A",hostel:"Aravali",house:"",phone:"9541390200",email:"amaris@gmail.com",img:"",fatherName:"UDHAYBIR SINGH",motherName:"RAJNEE DEVI",address:"WARD NO 09, VPO & TEHSIL, NAGRI PAROLE, DISTT. KATHUA-184151"},
+  {admissionNo:"2828",name:"RIDHAM LONI",class:"X A",hostel:"Aravali",house:"",phone:"6005238677",email:"ridhamloni@gmail.com",img:"",fatherName:"RAKESH KUMAR",motherName:"REKHA RANI",address:"VPO. KHANPUR, TESHIL. MARHEEN, DISTT. KATHUA PIN. 184148"}
+];
+
+/* Load students from localStorage and merge with core list so
+   any new entries added in code appear after reload, while
+   manual/Excel-added students are preserved. */
 let students = JSON.parse(localStorage.getItem("students_seed_v2") || "[]");
-if(students.length === 0){
-  students = [
-    {admissionNo:"2912",name:"HARI NIHAR",class:"IX A",hostel:"Aravali",phone:"7780851610",email:"harinihar@gmail.com",img:"",fatherName:"SANJEEV KUMAR",motherName:"MEENIKSHI MEHRA",address:"V.P.O BHADDU TESHIL BILLAWAR DIST KATHU"},
-    {admissionNo:"2904",name:"MOHIT KUMAR",class:"IX A",hostel:"Aravali",house:"",phone:"7889519688",email:"mohitkumar@gmail.com",img:"",fatherName:"SHAM LAL",motherName:"TOSHI DEVI",address:"V.P.O JARNOTA TESHIL BASOHLI DIST KATHUA"},
-    {admissionNo:"2960",name:"SHARAB AHMED MALIK",class:"IX A",hostel:"Aravali",house:"",phone:"7006458872",email:"sharabahmedmalik@gmail.com",img:"",fatherName:"SHABIR AHMED",motherName:"BUSHRAY BEGUM",address:"VILLAGE BADNOTA TEH LOHAI MALHAR,DIST KATHUA"},
-    {admissionNo:"2891",name:"SPARSH SINGH",class:"IX A",hostel:"Aravali",house:"",phone:"7006195102",email:"sparshsingh@gmail.com",img:"",fatherName:"RAJENDAR",motherName:"RANJANA PUNIA",address:"VILLAGE KALARI TESHIL KATHUA DIST KATHUA"},
-    {admissionNo:"2917",name:"SUDHANSHU SONI",class:"IX A",hostel:"Aravali",house:"",phone:"9541344600",email:"sudhanshusoni@gmail.com",img:"",fatherName:"MANGU RAM",motherName:"SUSHMA DEVI",address:"V.P.O PANDORI,TEHSIL NAGRI PAROLE,DISTRICT KATHUA,JAMMU &KASHMIR,"},
-    {admissionNo:"2875",name:"VANSHIK MANKOTIA",class:"IX A",hostel:"Aravali",house:"",phone:"9622129129",email:"vanshikmankotia@gmail.com",img:"",fatherName:"GURDEV SINGH",motherName:"SHILPY RAJPUT",address:"VILLAGE BAKTHPUR TESHIL BILLAWAR DIST KATHUA"},
-    {admissionNo:"4054",name:"DAKSH VERMA",class:"IX A",hostel:"Aravali",house:"",phone:"9622492267",email:"dakshverma@gmail.com",img:"",fatherName:"SATISHKUMAR",motherName:"RANIDEVI",address:"V.P.O JARNOTA TESHIL BASOHLI DIST KATHUA"},
-    {admissionNo:"4056",name:"PRINCE VERMA",class:"IX B",hostel:"Aravali",house:"",phone:"9622218975",email:"princeverma@gmail.com",img:"",fatherName:" MINTU KUMAR",motherName:" POONAM DEVI",address:"VILL. DRAMAN, TEHSIL BASOHLI, P/O DRAMAN,KATHUA, J&K, 184201"},
-    {admissionNo:"2840",name:"DHEERAJ SHARMA",class:"X A",hostel:"Aravali",house:"",phone:"9419129902",email:"dheerajsharma@gmail.com",img:"",fatherName:" RAM PARSHAD",motherName:" KAILASH",address:"VILL. MEARTH, P.O. BUDHI, TESHIL & DISTT. KATHUA PIN. 184143"},
-    {admissionNo:"2781",name:"MANIK BOURNEY",class:"X A",hostel:"Aravali",house:"",phone:"9697175274",email:"manikbourney@gmail.com",img:"",fatherName:" TILAK RAJ",motherName:" SAMBO DEVI",address:"WARD NO. 3 NEAR GMS DADWARA, P.O. BHADDU, TESHIL. BILLAWAR, DISTT. KATHUA PIN. 184203"},
-    {admissionNo:"2855",name:"BHANU PARTAP",class:"X B",hostel:"Aravali",house:"",phone:"7889583545",email:"bhanupartap@gmail.com",img:"",fatherName:"LAJJAY RAM",motherName:"RANI DEVI",address:"VPO. NAGRI PAROLE TESHIL. NAGRI PAROLE, DISTT. KATHUA PIN. 184151"},
-    {admissionNo:"2803",name:"DHEERAJ BHAGAT",class:"X B",hostel:"Aravali",house:"",phone:"9622320075",email:"dheerajbhagat@gmail.com",img:"",fatherName:"PARSHOTAM LAL",motherName:"ANJANA DEVI",address:"VILL. JAGATPUR MARHEEN, TESHIL. MARHEEN DISTT. KATHUA PIN. 184148"},
-    {admissionNo:"4024",name:"DHRUB KESAR",class:"X B",hostel:"Aravali",house:"",phone:"6005268289",email:"dhrubkesar@gmail.com",img:"",fatherName:"PAWAN KUMAR",motherName:"SUSHMA DEVI",address:"VILL. KATHEEL DHANGU TESHIL.  MAJALTA DISTT. UDHAMPUR, P.O PEOUNI PIN. 182117"},
-    {admissionNo:"2815",name:"GAJIT KUMAR",class:"X B",hostel:"Aravali",house:"",phone:"7006236041",email:"gajitkumar@gmail.com",img:"",fatherName:"NARESH KUMAR",motherName:"SONU DEVI",address:"WARD NO. 3 VILL SANOHI P.O. TAPPER, TESHIL BANI, DISTT. KATHUA PIN. 184206"},
-    {admissionNo:"2854",name:"MAHEE BILLOWRIA",class:"X B",hostel:"Aravali",house:"",phone:"9697162402",email:"maheebillowria@gmail.com",img:"",fatherName:"HARDEEP SINGH",motherName:"NEERAJ BALA",address:"VILL. BARWAL, TESHIL & DISTT. KATHUA PIN. 184143"},
-    {admissionNo:"2797",name:"RUDRA VERMA",class:"X B",hostel:"Aravali",house:"",phone:"6005238677",email:"rudraverma@gmail.com",img:"",fatherName:"RAKESH KUMAR",motherName:"REKHA RANI",address:"VPO. KHANPUR, TESHIL. MARHEEN, DISTT. KATHUA PIN. 184148"},
-    {admissionNo:"2827",name:"SANGAM FACKOLU",class:"X B",hostel:"Aravali",house:"",phone:"9149710375",email:"sangamfackolu@gmail.com",img:"",fatherName:"MUKESH KUMAR",motherName:"VEENA DEVI",address:"WARD NO. 5, NEAR SHIV TEMPLE, VILL. THANA, P.O. PLASSI, TESHIL. BASOHLI DISTT. KATHUA PIN.184201"},
-    {admissionNo:"2762",name:"ARYAN SATYAL",class:"XI C",hostel:"Aravali",house:"",phone:"6006512829",email:"aryansatyal@gmail.com",img:"",fatherName:"JEET KUMAR",motherName:"SUSHMA RANI",address:"R/O NANAN P/O GHATI TESHIL& DISTT. KATHUA PIN. 184201"},
-    {admissionNo:"2733",name:"PUSHPAL SINGH",class:"XI B",hostel:"Aravali",house:"",phone:"9149664731",email:"pushpalsingh@gmail.com",img:"",fatherName:"SANJAY SINGH",motherName:"PINKY DEVI",address:"VPO. MALHAR TESHIL. LOHAI-MALHAR DISTT. KATHUA PIN. 184204"},
-    {admissionNo:"2709",name:"RAJESH KATAL",class:"XI B",hostel:"Aravali",house:"",phone:"7298356210",email:"rajeshkatal@gmail.com",img:"",fatherName:"KAKA RAM KATAL",motherName:"KANTA DEVI",address:"VPO. WNO. POONDA TESHIL. MAHANPUR DISTT. KATHUA PIN. 184201"},
-    {admissionNo:"2603",name:"DEEP KUMAR",class:"XII A",hostel:"Aravali",house:"",phone:"8082206251",email:"deepkumar@gmail.com",img:"",fatherName:"OM PRAKASH",motherName:"SUSHMA DEVI",address:"SERU BANI KATHUA 184206"},
-    {admissionNo:"2866",name:"GOURAV SHARMA",class:"XII A",hostel:"Aravali",house:"",phone:"6005851908",email:"gouravsharma@gmail.com",img:"",fatherName:"SANJEEV KUMAR SHARMA",motherName:"PINKY SHARMA",address:"W.NO. VILL. BIGWAN P.O. JAKHWAR TESHIL & DISTT. KATHUA PIN. 184014"},
-    {admissionNo:"2610",name:"KESHAV SHARMA",class:"XII A",hostel:"Aravali",house:"",phone:"9622394351",email:"keshavsharma@gmail.com",img:"",fatherName:"GULSHAN KUMAR",motherName:"SHIVANI SHARMA",address:"VPO. DHANNI BAKHTO (BHORTHAIN) TESHIL & DISTT. KATHUA PIN. 184143"},
-    {admissionNo:"2600",name:"NEERAJ KUMAR",class:"XII A",hostel:"Aravali",house:"",phone:"7006766723",email:"neerajkumar@gmail.com",img:"",fatherName:"HANSRAJ",motherName:"PINKI DEVI",address:"JANOTA PO SUKRALA BILLAWAR KATHUA 184201"},
-    {admissionNo:"2626",name:"VARUN THAKUR",class:"XII A",hostel:"Aravali",house:"",phone:"8493016411",email:"varunthakur@gmail.com",img:"",fatherName:"RAJINDER SINGH",motherName:"REVA DEVI",address:"CHUNERA MAHANUPUR KATHUA 184202"},
-    {admissionNo:"2592",name:"BALJEET SINGH",class:"XII B",hostel:"Aravali",house:"",phone:"9797310808",email:"baljeetsingh@gmail.com",img:"",fatherName:"KAKU RAM",motherName:"GUDDO DEVI",address:"SALLON BASOHLI KATHUA 184201"},
-    {admissionNo:"2640",name:"KARUN NAGOTRA",class:"XII B",hostel:"Aravali",house:"",phone:"7889526778",email:"karunnagotra@gmail.com",img:"",fatherName:"JAGDEV SINGH",motherName:"ANJU BALA",address:"MAHANPUR KATHUA 184201"},
-    {admissionNo:"2665",name:"KASHORE SINGH",class:"XII B",hostel:"Aravali",house:"",phone:"9589420782",email:"kashoresingh@gmail.com",img:"",fatherName:"OMKAR CHAND",motherName:"NEELAM DEVI",address:"BILLAWAR KATHUA 184204"},
-    {admissionNo:"2663",name:"PARSHANT KALANDRY",class:"XII B",hostel:"Aravali",house:"",phone:"9906278090",email:"parshantkalandry@gmail.com",img:"",fatherName:"DARSHAN KUMAR",motherName:"ANJU DEVI",address:"BANI KATHUA 184206"},
-    {admissionNo:"2719",name:"MOHD ASHFAQ",class:"XI B",hostel:"Aravali",house:"",phone:"7006248376",email:"mohdashfaq@gmail.com",img:"",fatherName:"BIRU DIN",motherName:"KHURSHEDA AKHTER",address:"VILL. NAJOTE, PO. SUKRALA DEVI, TESHIL. MALHAR DISTT. KATHUA PIN. 184204"},
-    {admissionNo:"2699",name:"PARUL VERMA",class:"XI A",hostel:"Aravali",house:"",phone:"8082056035",email:"parulverma@gmail.com",img:"",fatherName:"NEK RAM",motherName:"BHOLI DEVI",address:"VILL. GHODAL, BLOCK. MAHANPUR DISTT. KATHUA PIN. 184201"},
-    {admissionNo:"2798",name:"MUKESH SINGH",class:"X A",hostel:"Aravali",house:"",phone:"9622050730",email:"mukeshsingh@gmail.com",img:"",fatherName:"DEALK RAM",motherName:"MEEMO DEVI",address:"WARD NO. 1 NEAR GHSS  BADNOTA, TESHIL. BILLAWAR BADNOTIA  DISTT. KATHUA PIN.184204"},
-    {admissionNo:"2702",name:"ARNAV BILLAWRIA",class:"XI A",hostel:"Aravali",house:"",phone:"9419245990",email:"arnavbillawria@gmail.com",img:"",fatherName:"AMARJEET SINGH",motherName:"NAMRITA SLATHIA",address:"R/O. BUDHI BLOCK BARNOTI DISTT. KATHUA PIN. 184143"},
-    {admissionNo:"2734",name:"RAVI KUMAR",class:"XI B ",hostel:"Aravali",house:"",phone:"9622359875",email:"ravikumar@gmail.com",img:"",fatherName:"JOGINDER PAUL",motherName:"GOURA DEVI",address:"VPO. GURHA KALIAL TESHIL. RAMKOT DISTT. KAHTUA PIN. 184210"},
-    {admissionNo:"2749",name:"SHIVAM KUMAR",class:"XI B",hostel:"Aravali",house:"",phone:"7051490461",email:"shivamkumar@gmail.com",img:"",fatherName:"PALVINDER KUMAR",motherName:"CHANCHAL DEVI",address:"VPO. MARHEEN DISTT. KATHUA PIN. 184148"},
-    {admissionNo:"2788",name:"NISHANT SHARMA",class:"X A",hostel:"Aravali",house:"",phone:"7298197597",email:"nishantsharma@gmail.com",img:"",fatherName:"PAWAN KUMAR",motherName:"KIRNA DEVI",address:"VPO. MAHANPUR , TESHIL. MAHANPUR, DISTT. KATHUA PIN. 184202"},
-    {admissionNo:"2784",name:"SOURAV SINGH",class:"X B",hostel:"Aravali",house:"",phone:"9682574896",email:"souravsingh@gmail.com",img:"",fatherName:"RAMESH SINGH",motherName:"JYOTI DEVI",address:"VILL. PCAHI, TESHIL. BASOHLI, DISTT. KATHUA PIN. 184201"},
-    {admissionNo:"5048",name:"KARAN",class:"XI C",hostel:"Aravali",house:"",phone:"7298425209",email:"karan@gmail.com",img:"",fatherName:"SOM RAJ",motherName:"SATYA DEVI",address:"R/O VPO BANI, TEHSIL BANI DISTT. KATHUA (JK)-184206"},
-    {admissionNo:"2868",name:"AMARIS",class:"IX A",hostel:"Aravali",house:"",phone:"9541390200",email:"amaris@gmail.com",img:"",fatherName:"UDHAYBIR SINGH",motherName:"RAJNEE DEVI",address:"WARD NO 09, VPO & TEHSIL, NAGRI PAROLE, DISTT. KATHUA-184151"},
-    {admissionNo:"2828",name:"RIDHAM LONI",class:"X A",hostel:"Aravali",house:"",phone:"6005238677",email:"ridhamloni@gmail.com",img:"",fatherName:"RAKESH KUMAR",motherName:"REKHA RANI",address:"VPO. KHANPUR, TESHIL. MARHEEN, DISTT. KATHUA PIN. 184148"},
-  ];
+
+function syncCoreStudentsIntoLocal() {
+  const byAdm = new Map(students.map(s => [s.admissionNo, s]));
+  coreStudents.forEach(cs => {
+    if (!cs.admissionNo) return;
+    if (!byAdm.has(cs.admissionNo)) {
+      students.push(Object.assign({}, cs));
+      byAdm.set(cs.admissionNo, cs);
+    } else {
+      // update fields from core to existing
+      Object.assign(byAdm.get(cs.admissionNo), cs);
+    }
+  });
   localStorage.setItem("students_seed_v2", JSON.stringify(students));
 }
+syncCoreStudentsIntoLocal();
 
+/* other data */
 let leaves = JSON.parse(localStorage.getItem("leaves_v2") || "[]");
 let timetable = JSON.parse(localStorage.getItem("timetable_v2") || "[]");
 let tasks = JSON.parse(localStorage.getItem("tasks_v2") || "[]");
@@ -477,8 +524,12 @@ function saveAll(){
   localStorage.setItem("leaves_v2", JSON.stringify(leaves));
   localStorage.setItem("timetable_v2", JSON.stringify(timetable));
   localStorage.setItem("tasks_v2", JSON.stringify(tasks));
+  localStorage.setItem("students_seed_v2", JSON.stringify(students));
 }
-function formatDate(ts){return new Date(ts).toLocaleDateString()}
+function formatDate(ts){return new Date(ts).toLocaleDateString();}
+function debounce(fn, ms){
+  let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); };
+}
 
 /* ==========================
    SESSION / RBAC
@@ -493,24 +544,25 @@ const roleBadge = $("#roleBadge");
 const whoamiText = $("#whoamiText");
 
 function setRBACVisibility(){
-  // Hide all RBAC elements by default
   $$(".rbac").forEach(el => el.classList.add("hidden"));
+
   if(currentUserRole === "teacher1"){
     $$(".r-teacher1").forEach(el => el.classList.remove("hidden"));
-  }else if(currentUserRole === "teacher2"){
+  } else if(currentUserRole === "teacher2"){
     $$(".r-teacher2").forEach(el => el.classList.remove("hidden"));
-    $("#exportStudentsBtn")?.classList.remove("hidden"); // teacher2 can export
+    $("#exportStudentsBtn")?.classList.remove("hidden");
   }
-  // Student/Parent – only Students section shown
+
   if(currentUserRole === "student" || currentUserRole === "parent"){
     showSection("students");
   }
+
   roleBadge.textContent = currentUserRole ? currentUserRole.toUpperCase() : "GUEST";
   whoamiText.textContent = currentUserName || "—";
 }
 
 /* ==========================
-   LOGIN (basic hardening for demo)
+   LOGIN (with lock + visible error)
 ========================== */
 const MAX_ATTEMPTS = 5;
 let attemptInfo = JSON.parse(localStorage.getItem("login_attempts") || '{"count":0,"until":0}');
@@ -526,7 +578,7 @@ function registerFail(){
   const now = Date.now();
   attemptInfo.count = (attemptInfo.count||0) + 1;
   if(attemptInfo.count >= MAX_ATTEMPTS){
-    attemptInfo.until = now + 60_000; // 1 minute lock
+    attemptInfo.until = now + 60_000;
     attemptInfo.count = 0;
   }
   localStorage.setItem("login_attempts", JSON.stringify(attemptInfo));
@@ -540,20 +592,29 @@ $("#loginBtn").addEventListener("click", ()=>{
   const lockLeft = lockCheck();
   const err = $("#loginError");
   if(lockLeft){
-    err.textContent = `Too many attempts. Try again in ${lockLeft}s.`;
-    err.style.display = "block";
+    if(err){
+      err.textContent = `Too many attempts. Try again in ${lockLeft}s.`;
+      err.style.display = "block";
+    }
     return;
   }
   const email = $("#email").value.trim().toLowerCase();
   const pass = $("#password").value;
-  const user = users.find(u => (u.email.toLowerCase()===email || u.admissionNo===email) && u.password===pass);
+  const user = users.find(u =>
+    (u.email.toLowerCase()===email || (u.admissionNo && u.admissionNo.toLowerCase()===email)) &&
+    u.password===pass
+  );
   if(!user){
     registerFail();
-    err.textContent = "Invalid credentials.";
-    err.style.display = "block";
+    if(err){
+      err.textContent = "Invalid credentials.";
+      err.style.display = "block";
+    }
     return;
   }
   registerSuccess();
+  if(err){ err.style.display = "none"; }
+
   session = {role:user.role, admissionNo:user.admissionNo||"", name:user.name||user.email, email:user.email};
   localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   currentUserRole = session.role;
@@ -599,7 +660,7 @@ function filterStudents(){
     if(hostel && s.hostel !== hostel) return false;
     if(house && s.house !== house) return false;
     if(!q) return true;
-    return s.name.toLowerCase().includes(q) || s.admissionNo.toLowerCase().includes(q);
+    return (s.name || "").toLowerCase().includes(q) || (s.admissionNo || "").toLowerCase().includes(q);
   });
 
   pageIndex = 0;
@@ -627,16 +688,15 @@ function studentCard(s){
 
   card.innerHTML = `
     <div class="avatar">${ s.img ? `<img src="${escapeHTML(s.img)}" alt="${escapeHTML(s.name)}">` : "🧑" }</div>
-    <h3>${escapeHTML(s.name)}</h3>
-    <div class="meta">Admission No: ${escapeHTML(s.admissionNo)}</div>
+    <h3>${escapeHTML(s.name || "")}</h3>
+    <div class="meta">Admission No: ${escapeHTML(s.admissionNo || "")}</div>
     <div class="kv">
-      <div>Class</div><div>${escapeHTML(s.class)}</div>
-      <div>Hostel</div><div>${escapeHTML(s.hostel)}</div>
-      <div>House</div><div>${escapeHTML(s.house)}</div>
-      <div>Phone</div><div>${escapeHTML(s.phone)}</div>
-      <div>Father</div><div>${escapeHTML(s.fatherName)}</div>
-      <div>Mother</div><div>${escapeHTML(s.motherName)}</div>
-      <div>Address</div><div>${escapeHTML(s.address)}</div>
+      <div>Class</div><div>${escapeHTML(s.class || "")}</div>
+      <div>Hostel</div><div>${escapeHTML(s.hostel || "")}</div>
+      <div>Phone</div><div>${escapeHTML(s.phone || "")}</div>
+      <div>Father</div><div>${escapeHTML(s.fatherName || "")}</div>
+      <div>Mother</div><div>${escapeHTML(s.motherName || "")}</div>
+      <div>Address</div><div>${escapeHTML(s.address || "")}</div>
       <div>Leaves</div><div>Partial: ${partialCount} | Full: ${fullCount}</div>
     </div>
   `;
@@ -658,16 +718,53 @@ $("#hostelFilter").addEventListener("change", filterStudents);
 $("#houseFilter").addEventListener("change", filterStudents);
 $("#loadMoreBtn").addEventListener("click", renderStudentsPage);
 
-function debounce(fn, ms){
-  let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }
+/* ==========================
+   MANUAL ADD STUDENT (Teacher1)
+========================== */
+function addStudentManual(){
+  if(currentUserRole !== "teacher1"){
+    alert("Only Teacher1 can add students.\nकेवल Teacher1 ही छात्र जोड़ सकते हैं।");
+    return;
+  }
+  const admissionNo = ($("#newAdmissionNo").value || "").trim();
+  const name = ($("#newStudentName").value || "").trim();
+  if(!admissionNo || !name){
+    alert("Admission No and Name are required.\nप्रवेश संख्या और नाम आवश्यक हैं।");
+    return;
+  }
+  if(students.some(s => s.admissionNo === admissionNo)){
+    alert("Student with this Admission No already exists.\nयह प्रवेश संख्या पहले से मौजूद है।");
+    return;
+  }
+  const s = {
+    admissionNo,
+    name,
+    class: ($("#newClass").value || "").trim(),
+    hostel: $("#newHostel").value || "",
+    house: "",
+    phone: ($("#newPhone").value || "").trim(),
+    email: ($("#newEmail").value || "").trim(),
+    img:"",
+    fatherName: ($("#newFather").value || "").trim(),
+    motherName: ($("#newMother").value || "").trim(),
+    address: ($("#newAddress").value || "").trim()
+  };
+  students.push(s);
+  localStorage.setItem("students_seed_v2", JSON.stringify(students));
+  filterStudents();
+  searchLeaveStudent();
+  ["newAdmissionNo","newStudentName","newClass","newPhone","newEmail","newFather","newMother","newAddress"].forEach(id=>$("#"+id).value="");
+  $("#newHostel").value = "";
+  alert("Student added and saved.\nछात्र सफलतापूर्वक सहेजा गया।");
 }
+$("#addStudentBtn").addEventListener("click", addStudentManual);
 
 /* ==========================
    LEAVES
 ========================== */
 function searchLeaveStudent(){
-  const val = $("#leaveSearchInput").value.trim().toLowerCase();
-  const list = students.filter(s=> s.name.toLowerCase().includes(val) || s.admissionNo.toLowerCase().includes(val));
+  const val = ($("#leaveSearchInput").value || "").trim().toLowerCase();
+  const list = students.filter(s=> (s.name || "").toLowerCase().includes(val) || (s.admissionNo || "").toLowerCase().includes(val));
   const sel = $("#leaveStudent");
   sel.innerHTML = "";
   list.forEach(s=>{
@@ -683,14 +780,18 @@ function applyLeave(){
   const type = document.querySelector('input[name="leaveType"]:checked').value;
   const from = $("#leaveFrom").value;
   const to = $("#leaveTo").value;
-  const reason = $("#leaveReason").value.trim();
-  const parent = $("#leaveParent").value.trim();
-  if(!admissionNo || !from || !to){ alert("Fill all fields"); return; }
+  const reason = ($("#leaveReason").value || "").trim();
+  const parent = ($("#leaveParent").value || "").trim();
+  if(!admissionNo || !from || !to){
+    alert("Fill all mandatory fields.\nसभी अनिवार्य विवरण भरें।");
+    return;
+  }
 
   leaves.push({admissionNo, type, from, to, reason, parent, date: formatDate(Date.now())});
   saveAll();
   displayLeaveHistory();
   filterStudents();
+  alert("Leave applied successfully.\nअवकाश सफलतापूर्वक दर्ज हो गया।");
 }
 
 function displayLeaveHistory(){
@@ -701,13 +802,13 @@ function displayLeaveHistory(){
     if((currentUserRole==="student"||currentUserRole==="parent") && l.admissionNo !== currentStudent) return;
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${escapeHTML(l.admissionNo)}</td>
-      <td>${escapeHTML(l.type)}</td>
-      <td>${escapeHTML(l.from)}</td>
-      <td>${escapeHTML(l.to)}</td>
-      <td>${escapeHTML(l.reason||"")}</td>
-      <td>${escapeHTML(l.parent||"")}</td>
-      <td>${escapeHTML(l.date)}</td>
+      <td>${escapeHTML(l.admissionNo || "")}</td>
+      <td>${escapeHTML(l.type || "")}</td>
+      <td>${escapeHTML(l.from || "")}</td>
+      <td>${escapeHTML(l.to || "")}</td>
+      <td>${escapeHTML(l.reason || "")}</td>
+      <td>${escapeHTML(l.parent || "")}</td>
+      <td>${escapeHTML(l.date || "")}</td>
     `;
     if(currentUserRole==="teacher1"){
       const td = document.createElement("td");
@@ -723,7 +824,7 @@ function displayLeaveHistory(){
 }
 
 function deleteLeave(index){
-  if(!confirm("Delete this leave record?")) return;
+  if(!confirm("Delete this leave record?\nक्या आप यह अवकाश रिकॉर्ड हटाना चाहते हैं?")) return;
   leaves.splice(index,1);
   saveAll();
   displayLeaveHistory();
@@ -737,7 +838,6 @@ function downloadLeaveHistory(){
   XLSX.writeFile(wb, "LeaveHistory.xlsx");
 }
 
-// Ensure a robust downloadStudentLeave available (overrides any previous)
 function downloadStudentLeave(admissionNo){
   try{
     const sLeaves = leaves.filter(l=>l.admissionNo===admissionNo);
@@ -746,7 +846,6 @@ function downloadStudentLeave(admissionNo){
       return;
     }
     const wb = XLSX.utils.book_new();
-    // Normalize objects to ensure consistent columns
     const normalized = sLeaves.map(l => ({
       admissionNo: l.admissionNo || "",
       type: l.type || "",
@@ -771,10 +870,14 @@ function downloadStudentLeave(admissionNo){
 function addTask(){
   const hostel = $("#taskHostel").value;
   const date = $("#taskDate").value;
-  const desc = $("#taskDesc").value.trim();
-  if(!hostel || !date || !desc){ alert("Fill all fields"); return; }
+  const desc = ($("#taskDesc").value || "").trim();
+  if(!hostel || !date || !desc){
+    alert("Fill all fields.\nसभी विवरण भरें।");
+    return;
+  }
   tasks.push({hostel, date, desc});
-  saveAll(); displayTasks();
+  saveAll();
+  displayTasks();
 }
 function displayTasks(){
   const t = $("#taskTable");
@@ -782,7 +885,7 @@ function displayTasks(){
   t.innerHTML = `<tr><th>Hostel</th><th>Date</th><th>Task</th>${hdrAction}</tr>`;
   tasks.forEach((task,idx)=>{
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${escapeHTML(task.hostel)}</td><td>${escapeHTML(task.date)}</td><td>${escapeHTML(task.desc)}</td>`;
+    tr.innerHTML = `<td>${escapeHTML(task.hostel || "")}</td><td>${escapeHTML(task.date || "")}</td><td>${escapeHTML(task.desc || "")}</td>`;
     if(currentUserRole==="teacher1"){
       const td = document.createElement("td");
       const btn = document.createElement("button");
@@ -794,9 +897,10 @@ function displayTasks(){
   });
 }
 function deleteTask(index){
-  if(!confirm("Delete this task?")) return;
+  if(!confirm("Delete this task?\nक्या आप यह कार्य हटाना चाहते हैं?")) return;
   tasks.splice(index,1);
-  saveAll(); displayTasks();
+  saveAll();
+  displayTasks();
 }
 function downloadTasks(){
   const wb = XLSX.utils.book_new();
@@ -809,13 +913,19 @@ function downloadTasks(){
    TIMETABLE (Teacher2)
 ========================== */
 function addTimetable(){
-  if(currentUserRole !== "teacher2"){ alert("Only Teacher2 can add timetable"); return; }
+  if(currentUserRole !== "teacher2"){
+    alert("Only Teacher2 can add timetable.\nकेवल Teacher2 समय सारिणी जोड़ सकता है।");
+    return;
+  }
   const cls = $("#ttClass").value;
   const date = $("#ttDate").value;
   const time = $("#ttTime").value;
-  const topic = $("#ttTopic").value.trim();
-  const teacher = $("#ttTeacher").value.trim();
-  if(!date || !time || !topic || !teacher){ alert("Fill all fields"); return; }
+  const topic = ($("#ttTopic").value || "").trim();
+  const teacher = ($("#ttTeacher").value || "").trim();
+  if(!date || !time || !topic || !teacher){
+    alert("Fill all fields.\nसभी विवरण भरें।");
+    return;
+  }
   timetable.push({cls, date, time, topic, teacher});
   saveAll();
   displayTimetable();
@@ -826,22 +936,26 @@ function displayTimetable(){
   timetable.forEach((row, i)=>{
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${escapeHTML(row.cls)}</td>
-      <td>${escapeHTML(row.date)}</td>
-      <td>${escapeHTML(row.time)}</td>
-      <td>${escapeHTML(row.topic)}</td>
-      <td>${escapeHTML(row.teacher)}</td>
+      <td>${escapeHTML(row.cls || "")}</td>
+      <td>${escapeHTML(row.date || "")}</td>
+      <td>${escapeHTML(row.time || "")}</td>
+      <td>${escapeHTML(row.topic || "")}</td>
+      <td>${escapeHTML(row.teacher || "")}</td>
       <td>${ currentUserRole==="teacher2" ? `<button class="warn" data-del="${i}">Delete</button>` : "-" }</td>
     `;
     t.appendChild(tr);
   });
   t.querySelectorAll("button[data-del]").forEach(btn=>{
     btn.addEventListener("click", (e)=>{
-      if(currentUserRole !== "teacher2"){ alert("Only Teacher2 can delete timetable"); return; }
-      if(!confirm("Delete this timetable entry?")) return;
+      if(currentUserRole !== "teacher2"){
+        alert("Only Teacher2 can delete timetable.\nकेवल Teacher2 समय सारिणी हटा सकता है।");
+        return;
+      }
+      if(!confirm("Delete this timetable entry?\nक्या आप यह समय सारिणी हटाना चाहते हैं?")) return;
       const idx = +e.currentTarget.getAttribute("data-del");
       timetable.splice(idx,1);
-      saveAll(); displayTimetable();
+      saveAll();
+      displayTimetable();
     });
   });
 }
@@ -864,7 +978,6 @@ $("#uploadExcel").addEventListener("change", (event)=>{
     const wb = XLSX.read(data, {type:"array"});
     const ws = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(ws);
-    // Expect headers matching keys of student object; ignore unknown fields
     rows.forEach(r=>{
       const s = {
         admissionNo: r.admissionNo || r["Admission No"] || r["admission_no"] || "",
@@ -879,11 +992,19 @@ $("#uploadExcel").addEventListener("change", (event)=>{
         motherName: r.motherName || r["Mother Name"] || "",
         address: r.address || r["Address"] || ""
       };
-      if(s.admissionNo) students.push(s);
+      if(s.admissionNo){
+        const existing = students.find(st => st.admissionNo === s.admissionNo);
+        if(existing){
+          Object.assign(existing, s);
+        } else {
+          students.push(s);
+        }
+      }
     });
     localStorage.setItem("students_seed_v2", JSON.stringify(students));
     filterStudents();
-    alert("Students uploaded.");
+    searchLeaveStudent();
+    alert("Students uploaded.\nछात्र डेटा अपलोड हो गया।");
   };
   reader.readAsArrayBuffer(file);
 });
@@ -895,35 +1016,24 @@ $("#exportStudentsBtn").addEventListener("click", ()=>{
 });
 
 /* ==========================
-   LOAD STUDENT DATA BUTTON (3 confirmations, bilingual prompts)
-   This is the new functionality requested: it saves the in-code `students` array
-   into localStorage key `students_seed_v2` after asking three confirmations.
+   LOAD STUDENT DATA BUTTON
+   (sync from coreStudents again)
 ========================== */
-$("#loadStudentDataBtn").addEventListener("click", ()=>{
-  // Confirmation 1
-  const c1 = confirm("Are you sure you want to load student data? / क्या आप छात्र डेटा लोड करना चाहते हैं?");
-  if(!c1) return;
-  // Confirmation 2
-  const c2 = confirm("This will replace the current student list in local storage. Continue? / यह लोकल स्टोरेज में वर्तमान छात्र सूची को बदल देगा। क्या जारी रखें?");
-  if(!c2) return;
-  // Confirmation 3
-  const c3 = confirm("Final confirmation — load data now? / अंतिम पुष्टि — क्या अभी डेटा लोड करें?");
-  if(!c3) return;
+function loadStudentData() {
+  if (!confirm("Are you sure you want to load the latest student data from app code?\nक्या आप निश्चित हैं कि आप ऐप कोड से नया छात्र डेटा लोड करना चाहते हैं?")) return;
+  if (!confirm("This will update existing students with core list (local additions will stay).\nयह कोड वाली सूची से डेटा अपडेट करेगा, लोकल जोड़े गए छात्र बने रहेंगे।")) return;
+  if (!confirm("Final confirmation — proceed?\nअंतिम पुष्टि — क्या आप आगे बढ़ना चाहते हैं?")) return;
 
-  try{
-    // Save only student list to the same key used in the app.
-    localStorage.setItem("students_seed_v2", JSON.stringify(students));
-    // Re-load into the running variable in case user had navigated earlier.
-    students = JSON.parse(localStorage.getItem("students_seed_v2") || "[]");
-    // Refresh UI (students list)
+  try {
+    syncCoreStudentsIntoLocal();
+    alert("Latest student data synced from core list.\nनया छात्र डेटा कोर सूची से सिंक हो गया।");
     filterStudents();
-    // Show success bilingual message
-    alert("✅ Student data loaded successfully! / छात्र डेटा सफलतापूर्वक लोड हो गया!");
-  }catch(err){
-    console.error(err);
-    alert("Error saving student data. / छात्र डेटा सहेजने में त्रुटि।");
+    searchLeaveStudent();
+  } catch (e) {
+    console.error("Error updating student data:", e);
+    alert("Error updating data.\nडेटा अपडेट करते समय त्रुटि हुई।");
   }
-});
+}
 
 /* ==========================
    DOWNLOAD BUTTONS
@@ -945,56 +1055,24 @@ $("#addTimetableBtn").addEventListener("click", addTimetable);
 ========================== */
 $("#logoutBtn").addEventListener("click", ()=>{
   localStorage.removeItem(SESSION_KEY);
+  // keep stored data (students, leaves, etc.) forever in localStorage
   location.reload();
 });
 
 /* ==========================
    START APP
 ========================== */
-
-  
-</script>
-  <!-- ✅ Separate script for Load Student Data -->
-<script>
-function loadStudentData() {
-  if (!confirm("Are you sure you want to load the latest student data?\nक्या आप निश्चित हैं कि आप नया छात्र डेटा लोड करना चाहते हैं?")) return;
-  if (!confirm("This will replace the old student data.\nयह पुराने छात्र डेटा को बदल देगा।")) return;
-  if (!confirm("Final confirmation — proceed?\nअंतिम पुष्टि — क्या आप आगे बढ़ना चाहते हैं?")) return;
-
-  try {
-    // Use latest array from code
-    if (window.students && Array.isArray(window.students) && window.students.length > 0) {
-      // Replace old data in localStorage
-      localStorage.removeItem("students_seed_v2");
-      localStorage.setItem("students_seed_v2", JSON.stringify(window.students));
-
-      alert("✅ Latest student data updated successfully!\nनया छात्र डेटा सफलतापूर्वक अपडेट हो गया!");
-
-      // Refresh page after short delay
-      setTimeout(() => location.reload(), 800);
-    } else {
-      alert("⚠️ No student list found in code.\nकोड में छात्र सूची नहीं मिली।");
-    }
-  } catch (e) {
-    console.error("Error updating student data:", e);
-    alert("❌ Error updating data.\nडेटा अपडेट करते समय त्रुटि हुई।");
-  }
-}
-  function startApp(){
-  // Toggle views
+function startApp(){
   $("#loginView").style.display = "none";
   $("#app").style.display = "block";
 
-  // RBAC
   setRBACVisibility();
 
-  // Initial renders
   filterStudents();
   displayLeaveHistory();
   displayTimetable();
   displayTasks();
 
-  // Populate leave student list by default
   searchLeaveStudent();
 }
 
@@ -1007,7 +1085,3 @@ if(session && session.role){
 </script>
 </body>
 </html>
-
-
-
-
