@@ -338,7 +338,8 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
       <h2>Students</h2>
 
       <!-- Manual add student for Teacher1 -->
-      <div id="addStudentPanel" class="card rbac r-teacher1" style="margin-bottom:14px;">
+      <!-- UPDATED: hidden by default, shown only when clicking "Add / Manage Students" -->
+      <div id="addStudentPanel" class="card rbac r-teacher1 hidden" style="margin-bottom:14px;">
         <h3 style="margin-top:0;">Add Student (Teacher1)</h3>
         <div class="filters">
           <input id="newAdmissionNo" placeholder="Admission No" />
@@ -729,6 +730,7 @@ $("#addStudentMenuBtn").addEventListener("click", ()=>{
   drawer.classList.remove("open");
   const panel = $("#addStudentPanel");
   if(panel){
+    panel.classList.remove("hidden");        // NEW: show panel when menu is clicked
     panel.scrollIntoView({behavior:"smooth", block:"start"});
   }
 });
@@ -1267,4 +1269,3 @@ if(session && session.role){
 </script>
 </body>
 </html>
-
