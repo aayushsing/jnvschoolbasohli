@@ -95,7 +95,7 @@ button.ghost{background:transparent}
 button.warn{background:linear-gradient(90deg, #ff7750, #ff4d4d); border:none; color:#200}
 button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; color:#002412}
 
-/* Cards grid with virtualized pagination */
+/* Cards grid */
 .grid{
   display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:14px;
 }
@@ -206,15 +206,11 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
   .login-card h2{ font-size: 1rem; line-height: 1.2; }
   input, select, button{ font-size: .9rem; padding: 9px 10px; }
 
-  /* Cards compress a bit better */
   .grid{ grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
   .card{ padding: 12px; }
   .card .avatar{ width: 58px; height: 58px; }
 
-  /* Filters wrap tighter without overflowing */
   .filters{ gap: 8px; }
-
-  /* Drawer a hair narrower on tiny screens */
   .drawer{ width: 280px; }
 }
 
@@ -236,6 +232,33 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
 @media (max-width:480px){
   .ticker{ max-width:58vw; padding:5px 8px; }
   .ticker span{ font-size:.8rem; }
+}
+
+/* Modal for editing student */
+.modal-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.6);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:2000;
+}
+.modal-card{
+  background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  border-radius:16px;
+  border:1px solid var(--stroke);
+  padding:18px;
+  max-width:520px;
+  width:95vw;
+  box-shadow:var(--glow);
+}
+.modal-header{
+  display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;
+}
+.modal-header h3{margin:0; font-size:1rem;}
+.modal-actions{
+  display:flex; justify-content:flex-end; gap:10px; margin-top:12px;
 }
 </style>
 </head>
@@ -264,7 +287,6 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
       </div>
     </div>
 
-    <!-- login error -->
     <div id="loginError" class="helper" style="color:#ff4d4d; display:none;"></div>
   </div>
 </section>
@@ -290,7 +312,6 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
       <button data-section="timetable" class="rbac r-teacher2">📅 Timetable</button>
       <button data-section="hostelTasks" class="rbac r-teacher1">🏠 Hostel Tasks</button>
 
-      <!-- Student Verification Card – visible to Teacher1 only -->
       <button id="verificationBtn" class="rbac r-teacher1" onclick="window.open('https://aayushsing.github.io/Student-Verification-System/','_blank')">🪪 Student Verification Card</button>
     </div>
     <div class="group">
@@ -298,8 +319,8 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
       <button id="uploadBtn" class="rbac r-teacher1">⬆️ Upload Students Excel</button>
       <input type="file" id="uploadExcel" accept=".xlsx,.xls" class="hidden">
       <button id="exportStudentsBtn" class="rbac r-teacher1 r-teacher2">⬇️ Export Students</button>
-      <!-- Load Student Data from core list -->
-      <button class="menu-btn rbac r-teacher1" onclick="loadStudentData()">📥 Load Student Data</button>
+      <button id="addStudentMenuBtn" class="rbac r-teacher1">➕ Add / Manage Students</button>
+      <button class="menu-btn rbac r-teacher1" onclick="loadStudentData()">📥 Load Core Student Data</button>
     </div>
   </aside>
 
@@ -316,9 +337,9 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
     <section id="students" class="section active">
       <h2>Students</h2>
 
-      <!-- Manual add student (Teacher1 only) -->
+      <!-- Manual add student for Teacher1 -->
       <div id="addStudentPanel" class="card rbac r-teacher1" style="margin-bottom:14px;">
-        <h3 style="margin-top:0;">Add Student (Teacher1 only)</h3>
+        <h3 style="margin-top:0;">Add Student (Teacher1)</h3>
         <div class="filters">
           <input id="newAdmissionNo" placeholder="Admission No" />
           <input id="newStudentName" placeholder="Name" />
@@ -348,7 +369,6 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
           <option>Shivalik</option>
           <option>Udaigiri</option>
         </select>
-        <!-- house filter kept (if needed), but card no longer shows house -->
         <select id="houseFilter">
           <option value="">All Houses</option>
           <option>Blue</option>
@@ -425,6 +445,37 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
   </main>
 </section>
 
+<!-- Student Edit Modal -->
+<div id="studentModalBackdrop" class="modal-backdrop hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Edit Student</h3>
+      <button id="editCloseBtn" class="toolbar-btn" style="width:auto;">✕</button>
+    </div>
+    <div class="helper" style="margin-bottom:8px;">Admission No: <strong id="editAdmissionNo">—</strong></div>
+    <div class="filters" style="margin-top:4px;">
+      <input id="editName" placeholder="Name" />
+      <input id="editClass" placeholder="Class (e.g. IX A)" />
+      <select id="editHostel">
+        <option value="">Hostel</option>
+        <option>Aravali</option>
+        <option>Nilgiri</option>
+        <option>Shivalik</option>
+        <option>Udaigiri</option>
+      </select>
+      <input id="editPhone" placeholder="Phone" />
+      <input id="editEmail" placeholder="Email" />
+      <input id="editFather" placeholder="Father Name" />
+      <input id="editMother" placeholder="Mother Name" />
+      <input id="editAddress" placeholder="Address" style="flex:1 1 100%;" />
+    </div>
+    <div class="modal-actions">
+      <button id="editCancelBtn" class="toolbar-btn">Cancel</button>
+      <button id="editSaveBtn" class="primary" style="width:auto;">Update</button>
+    </div>
+  </div>
+</div>
+
 <!-- XLSX for import/export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
@@ -432,7 +483,7 @@ button.ok{background:linear-gradient(90deg, #39d98a, #12b886); border:none; colo
 "use strict";
 
 /* ==========================
-   DATA (demo only – replace with server in production)
+   DATA
 ========================== */
 const users = [
   {email:"sankalp@gmail.com",   password:"1234", role:"teacher1", name:"Sankalp"},
@@ -444,7 +495,6 @@ const users = [
   {email:"parent@gmail.com",    password:"1234", role:"parent",   admissionNo:"JNVT001", name:"Parent of Aayush"}
 ];
 
-/* core student list (source of truth in code) */
 const coreStudents = [
   {admissionNo:"2912",name:"HARI NIHAR",class:"IX A",hostel:"Aravali",house:"",phone:"7780851610",email:"harinihar@gmail.com",img:"",fatherName:"SANJEEV KUMAR",motherName:"MEENIKSHI MEHRA",address:"V.P.O BHADDU TESHIL BILLAWAR DIST KATHU"},
   {admissionNo:"2904",name:"MOHIT KUMAR",class:"IX A",hostel:"Aravali",house:"",phone:"7889519688",email:"mohitkumar@gmail.com",img:"",fatherName:"SHAM LAL",motherName:"TOSHI DEVI",address:"V.P.O JARNOTA TESHIL BASOHLI DIST KATHUA"},
@@ -485,12 +535,46 @@ const coreStudents = [
   {admissionNo:"2784",name:"SOURAV SINGH",class:"X B",hostel:"Aravali",house:"",phone:"9682574896",email:"souravsingh@gmail.com",img:"",fatherName:"RAMESH SINGH",motherName:"JYOTI DEVI",address:"VILL. PCAHI, TESHIL. BASOHLI, DISTT. KATHUA PIN. 184201"},
   {admissionNo:"5048",name:"KARAN",class:"XI C",hostel:"Aravali",house:"",phone:"7298425209",email:"karan@gmail.com",img:"",fatherName:"SOM RAJ",motherName:"SATYA DEVI",address:"R/O VPO BANI, TEHSIL BANI DISTT. KATHUA (JK)-184206"},
   {admissionNo:"2868",name:"AMARIS",class:"IX A",hostel:"Aravali",house:"",phone:"9541390200",email:"amaris@gmail.com",img:"",fatherName:"UDHAYBIR SINGH",motherName:"RAJNEE DEVI",address:"WARD NO 09, VPO & TEHSIL, NAGRI PAROLE, DISTT. KATHUA-184151"},
-  {admissionNo:"2828",name:"RIDHAM LONI",class:"X A",hostel:"Aravali",house:"",phone:"6005238677",email:"ridhamloni@gmail.com",img:"",fatherName:"RAKESH KUMAR",motherName:"REKHA RANI",address:"VPO. KHANPUR, TESHIL. MARHEEN, DISTT. KATHUA PIN. 184148"}
+  {admissionNo:"2898",name:"ACHUTAM VAID",class:"IX A",hostel:"Udaigiri",house:"",phone:"7780852296",email:"",img:"",fatherName:"ANIL GUPTA",motherName:"JYOTI GUPTA",address:"VILL. MAHANPUR, TEHSIL MAHANPUR, P/O MAHANPUR, KATHUA,J&K, 184202"},
+{admissionNo:"2962",name:"KARTIK SHARMA",class:"IX A",hostel:"Udaigiri",house:"",phone:"9149976306",email:"",img:"",fatherName:"PAWAN KUMAR",motherName:"ASHA RANI",address:"VILL. DHANU PROLE, TEHSIL BILLAWAR, P/O BILLAWAR, KATHUA, J&K, 184204"},
+{admissionNo:"2916",name:"NITESH G RAJ",class:"IX A",hostel:"Udaigiri",house:"",phone:"9596832968",email:"",img:"",fatherName:"GANESH RAJ",motherName:"RENU BALA",address:"WARD 7, VILL. CHANGI, TEHSIL MARHEEN, P/O SANJI MORH, KATHUA ,J&K, 184148"},
+{admissionNo:"2819",name:"BISHANT VERMA",class:"X A",hostel:"Udaigiri",house:"",phone:"6005400792",email:"",img:"",fatherName:"KARAM CHAND",motherName:"RAJNI DEVI",address:"WARD. NO. 3, NEAR GPS KAGRORE BASOHLI, DISTT. KATHUA PIN. 184201"},
+{admissionNo:"2811",name:"JATIN KARLUPIA",class:"X A",hostel:"Udaigiri",house:"",phone:"6006458095",email:"",img:"",fatherName:"RAJ KUMAR",motherName:"RAJNI DEVI",address:"VILL. DURANG, PO. NAGROTA, TESHIL. BASOHLI, DISTT. KATHUA PIN. 184201"},
+{admissionNo:"2646",name:"NISHANT TRARIA",class:"XII B",hostel:"Udaigiri",house:"",phone:"7298197597",email:"",img:"",fatherName:"PAWAN KUMAR",motherName:"KIRNA DEVI",address:"VPO. MAHANPUR, TESHIL. MAHANPUR, DISTT. KATHUA PIN. 184202"},
+{admissionNo:"2859",name:"ABHISHEK VERMA",class:"X A",hostel:"Udaigiri",house:"",phone:"8849604725",email:"",img:"",fatherName:"SURINDER SINGH",motherName:"SHASHI DEVI",address:"VILL. KASHEER, PO. HUT TESHIL. BASOHLI, DISTT. KATHUA PIN. 184201"},
+{admissionNo:"2775",name:"AVINANDAN",class:"X B",hostel:"Udaigiri",house:"",phone:"8803119087",email:"",img:"",fatherName:"LALIT KUMAR",motherName:"SAMBU DEVI",address:"V.P.O. KHAROTE, TESHIL. & DISTT. KATHUA PIN. 184102"},
+{admissionNo:"2794",name:"VARUN BHADWAL",class:"X B",hostel:"Udaigiri",house:"",phone:"8082036939",email:"",img:"",fatherName:"SUBASH CHANDER",motherName:"POOJA DEVI",address:"WARD NO. NEAR GMS DADWARA, P.O. BHADDU, TESHIL. BILLAWAR DISTT. KATHUA PIN. 184203"},
+{admissionNo:"2696",name:"LALIT SINGH",class:"XI B",hostel:"Udaigiri",house:"",phone:"7051010610",email:"",img:"",fatherName:"NARINDER SINGH",motherName:"SONAM ANDOTRA",address:"VILL. MATANDI BLOCK. KEERIAN GANDYAL. DISTT. KATHUA PIN. 191201"},
+{admissionNo:"2716",name:"DHAMAN BHARADWAJ",class:"XI B",hostel:"Udaigiri",house:"",phone:"9797590079",email:"",img:"",fatherName:"DEV RAJ",motherName:"ANITA DEVI",address:"VILL. DURANG BLOCK- MANDLI DISTT. KATHUA PIN. 184203"},
+{admissionNo:"2743",name:"FARMESHWAR MANGOTRA",class:"XI C",hostel:"Udaigiri",house:"",phone:"9697580660",email:"",img:"",fatherName:"KHEM RAJ",motherName:"RENU KUMARI",address:"R/O. DHANU PAROLE PO. LAHRI TESHIL. BILLAWAL DISTT. KATHUA PIN. 184203"},
+{admissionNo:"2687",name:"THAKUR ANMOL SINGH",class:"XI A",hostel:"Udaigiri",house:"",phone:"9797674106",email:"",img:"",fatherName:"UTTAM CHAND",motherName:"PREMIKA DEVI",address:"R/O SANDROON PO. BHANDAR TESHIL. BANI DISTT. KATHUA PIN. 184206"},
+{admissionNo:"2602",name:"AMAN SINGH",class:"XII A",hostel:"Udaigiri",house:"",phone:"9906063705",email:"",img:"",fatherName:"LEKH RAJ",motherName:"NEELAM DEVI",address:"BHAKOGA DULLANGAL BANI KATHUA 184206"},
+{admissionNo:"2652",name:"SAHIL KUMAR",class:"XII A",hostel:"Udaigiri",house:"",phone:"9622016117",email:"",img:"",fatherName:"SANJAY KUMAR",motherName:"REENA DEVI",address:"SURJAN  P/O  CHALOGE TESHIL. BANI. DISTT. KATHUA PIN. 184206"},
+{admissionNo:"2613",name:"SIDDHANT SINGH JAMWAL",class:"XII A",hostel:"Udaigiri",house:"",phone:"9149768371",email:"",img:"",fatherName:"JAGBIR SINGH",motherName:"JYOTI DEVI",address:"PLAKH BASOHLI KATHUA 184201"},
+{admissionNo:"2863",name:"VANSH KANETHIA",class:"XII A",hostel:"Udaigiri",house:"",phone:"9419619080",email:"",img:"",fatherName:"PRITAM DASS",motherName:"PUNAM PAMMI",address:"R/O. CHACK GADA DHAR, PO. LACHIPUR TESHIL & DISTT. KATHUA PIN. 184104"},
+{admissionNo:"2630",name:"VISHAV JEET",class:"XII A",hostel:"Udaigiri",house:"",phone:"9596906343",email:"",img:"",fatherName:"PIAYARAY LAL",motherName:"SHAKUNTLA DEVI",address:"MALHAR KATHUA 184204"},
+{admissionNo:"2635",name:"SUMIT SINGH PATHANIA",class:"XII A",hostel:"Udaigiri",house:"",phone:"8082624550",email:"",img:"",fatherName:"SUKHDEV SINGH",motherName:"JYOTI DEVI",address:"BILLAWAR KATHUA 184204"},
+{admissionNo:"2634",name:"BHAVISHAY SANGRAL",class:"XII C",hostel:"Udaigiri",house:"",phone:"9596614282",email:"",img:"",fatherName:"HANS RAJ",motherName:"ANJU BALA",address:"NAGRI KATHUA 184143"},
+{admissionNo:"2672",name:"DEWAKER BHARDVAJ",class:"XII C",hostel:"Udaigiri",house:"",phone:"9906241079",email:"",img:"",fatherName:"RAJINDER KUMAR",motherName:"MADHU BALA",address:"HIRANAGAR KATHUA184142"},
+{admissionNo:"2779",name:"ADARSH KANTYAL",class:"X A",hostel:"Udaigiri",house:"",phone:"9149962326",email:"",img:"",fatherName:"KULDEEP KUMAR",motherName:"NEELAM",address:"V.P.O. MALHAR TESHIL. LOHAI MALHAR DISTT. KATHUA PIN 184204"},
+{admissionNo:"2851",name:"DIVANSH CHOUDHARY",class:"X A",hostel:"Udaigiri",house:"",phone:"8082085200",email:"",img:"",fatherName:"SANJEEV SINGH",motherName:"REENA DEVI",address:"VILL. THATHI, PO. SESWAN TESHIL. MARHEEN, DISTT. KATHUA PIN. 184144"},
+{admissionNo:"2802",name:"SAMARTH SLATHIA",class:"X B",hostel:"Udaigiri",house:"",phone:"6005129328",email:"",img:"",fatherName:"SUDISH KUMAR VERMA",motherName:"POOJA RAJPUT",address:"W.NO. E2-409 EMPLOYEE COLONY CHENAB TESHIL. MILLS DISTT. KATHUA PIN. 6005129328"},
+{admissionNo:"2718",name:"BARUN KALSOTRA",class:"XI A",hostel:"Udaigiri",house:"",phone:"9469009760",email:"",img:"",fatherName:"SURESH KALSOTRA",motherName:"ASHA RANI",address:"VILL. DHALLI PO. DAYALA CHACK TESHIL. HIRANAGAR DISTT. KATHUA PIN. 184144"},
+{admissionNo:"2729",name:"LOVISH THAKUR",class:"XI A",hostel:"Udaigiri",house:"",phone:"9906313422",email:"",img:"",fatherName:"BHUSHAN SINGH",motherName:"MANISHA DEVI",address:"VILL. MALTI BLOCK- BILLAWAR DISTT. KATHUA PIN. 184204"},
+{admissionNo:"2732",name:"KOUSHAL KOTWAL",class:"XI A",hostel:"Udaigiri",house:"",phone:"6005589326",email:"",img:"",fatherName:"ROMESH KUMAR",motherName:"REETA DEVI",address:"VILL. MACHHEDI  BLOCK-LOHAI MALHAR DISTT. KATHUA PIN. 184204"},
+{admissionNo:"2742",name:"HIMANG BHARDWAJ",class:"XI A",hostel:"Udaigiri",house:"",phone:"9906266412",email:"",img:"",fatherName:"JANAK RAJ",motherName:"VEENA DEVI",address:"VPO. CHADWAL BLOCK-MARHEEN DISTT. KATHUA PIN. 184144"},
+{admissionNo:"2698",name:"SAHIL FERINGATA",class:"XI A",hostel:"Udaigiri",house:"",phone:"9906278938",email:"",img:"",fatherName:"SURINDER SINGH",motherName:"DIMPLE DEVI",address:"VPO. BANI TESHIL. BANI DISTT. KATHUA PIN. 184206"},
+{admissionNo:"2829",name:"DANISH MAJOTRA",class:"X B",hostel:"Udaigiri",house:"",phone:"9149839352",email:"",img:"",fatherName:"CHAMELO RAM",motherName:"POOJA DEVI",address:"VILL. HARDO MUTHI, P.O. AMALA, TESHIL. MARHEEN, DISTT. KATHUA PIN. 184144"},
+{admissionNo:"2799",name:"VANSH",class:"X A",hostel:"Udaigiri",house:"",phone:"7006331816",email:"",img:"",fatherName:"ROOP LAL",motherName:"SAROJ KUMARI",address:"VILL. JAGATPUR (MARHEEN) TESHIL. MARHEEN DISTT. KATHUA PIN. 184148"},
+{admissionNo:"2838",name:"SAKSHAM VERMA",class:"X A",hostel:"Udaigiri",house:"",phone:"7006062997",email:"",img:"",fatherName:"ARUN PARSHAD",motherName:"SUREKHA RANI",address:"VILL. NIHALPUR, PO. PALLI MORH, BARNOTI, DISTT. KATHUA PIN. 184143"},
+{admissionNo:"2875",name:"SAKSHAM VERMA",class:"X A",hostel:"Udaigiri",house:"",phone:"9149801781",email:"",img:"",fatherName:"BABU RAM",motherName:"ASHA RANI",address:"WARD NO. 4 R/O GURA KALYAL, TESHL. BILLAWAR DISTT. KATHUA PIN. 184203"},
+{admissionNo:"2711",name:"AKSHIT VERMA",class:"XI B",hostel:"Udaigiri",house:"",phone:"9858018288",email:"",img:"",fatherName:"RAMANAND",motherName:"SEEMA VERMA",address:"R/O-PARNALLA TESHIL. BILLAWAR, DISTT. KATHUA PIN. 184203"},
+{admissionNo:"5056",name:"NATIK GOUR",class:"XI A",hostel:"Udaigiri",house:"",phone:"9622302476",email:"",img:"",fatherName:"YOGINDER PAUL",motherName:"ASHA DEVI",address:"R/O HOTTAR,  TEHSIL BILLAWAR, DISTT. KATHUA (JK)-184203"},
+{admissionNo:"2608",name:"DIKSHIT BHARAT",class:"XII A",hostel:"Udaigiri",house:"",phone:"9596686360",email:"",img:"",fatherName:"TILAK RAJ",motherName:"RITA DEVI",address:"NANGAL KATHUA 184143"},
+{admissionNo:"2795",name:"TANISH MALGOTRA",class:"X B",hostel:"Udaigiri",house:"",phone:"8082036939",email:"",img:"",fatherName:"SUBASH CHANDER",motherName:"POOJA DEVI",address:"WARD NO. NEAR GMS DADWARA, P.O. BHADDU, TESHIL. BILLAWAR DISTT. KATHUA PIN. 184203"},
+{admissionNo:"2828",name:"RIDHAM LONI",class:"X A",hostel:"Aravali",house:"",phone:"6005238677",email:"ridhamloni@gmail.com",img:"",fatherName:"RAKESH KUMAR",motherName:"REKHA RANI",address:"VPO. KHANPUR, TESHIL. MARHEEN, DISTT. KATHUA PIN. 184148"}
 ];
 
-/* Load students from localStorage and merge with core list so
-   any new entries added in code appear after reload, while
-   manual/Excel-added students are preserved. */
 let students = JSON.parse(localStorage.getItem("students_seed_v2") || "[]");
 
 function syncCoreStudentsIntoLocal() {
@@ -498,10 +582,10 @@ function syncCoreStudentsIntoLocal() {
   coreStudents.forEach(cs => {
     if (!cs.admissionNo) return;
     if (!byAdm.has(cs.admissionNo)) {
-      students.push(Object.assign({}, cs));
-      byAdm.set(cs.admissionNo, cs);
+      const clone = Object.assign({}, cs);
+      students.push(clone);
+      byAdm.set(cs.admissionNo, clone);
     } else {
-      // update fields from core to existing
       Object.assign(byAdm.get(cs.admissionNo), cs);
     }
   });
@@ -509,7 +593,6 @@ function syncCoreStudentsIntoLocal() {
 }
 syncCoreStudentsIntoLocal();
 
-/* other data */
 let leaves = JSON.parse(localStorage.getItem("leaves_v2") || "[]");
 let timetable = JSON.parse(localStorage.getItem("timetable_v2") || "[]");
 let tasks = JSON.parse(localStorage.getItem("tasks_v2") || "[]");
@@ -545,24 +628,21 @@ const whoamiText = $("#whoamiText");
 
 function setRBACVisibility(){
   $$(".rbac").forEach(el => el.classList.add("hidden"));
-
   if(currentUserRole === "teacher1"){
     $$(".r-teacher1").forEach(el => el.classList.remove("hidden"));
   } else if(currentUserRole === "teacher2"){
     $$(".r-teacher2").forEach(el => el.classList.remove("hidden"));
     $("#exportStudentsBtn")?.classList.remove("hidden");
   }
-
   if(currentUserRole === "student" || currentUserRole === "parent"){
     showSection("students");
   }
-
   roleBadge.textContent = currentUserRole ? currentUserRole.toUpperCase() : "GUEST";
   whoamiText.textContent = currentUserName || "—";
 }
 
 /* ==========================
-   LOGIN (with lock + visible error)
+   LOGIN
 ========================== */
 const MAX_ATTEMPTS = 5;
 let attemptInfo = JSON.parse(localStorage.getItem("login_attempts") || '{"count":0,"until":0}');
@@ -643,8 +723,18 @@ function showSection(id){
   $("#"+id).classList.add("active");
 }
 
+/* menu: Add / Manage students */
+$("#addStudentMenuBtn").addEventListener("click", ()=>{
+  showSection("students");
+  drawer.classList.remove("open");
+  const panel = $("#addStudentPanel");
+  if(panel){
+    panel.scrollIntoView({behavior:"smooth", block:"start"});
+  }
+});
+
 /* ==========================
-   STUDENTS – virtualized grid with paging
+   STUDENTS
 ========================== */
 const PAGE_SIZE = 8;
 let filteredStudents = [];
@@ -703,11 +793,25 @@ function studentCard(s){
   if(currentUserRole==="teacher1"){
     const actions = document.createElement("div");
     actions.className = "actions";
-    const btn = document.createElement("button");
-    btn.className = "toolbar-btn";
-    btn.textContent = "Download Leaves";
-    btn.addEventListener("click", ()=>downloadStudentLeave(s.admissionNo));
-    actions.appendChild(btn);
+
+    const leavesBtn = document.createElement("button");
+    leavesBtn.className = "toolbar-btn";
+    leavesBtn.textContent = "Download Leaves";
+    leavesBtn.addEventListener("click", ()=>downloadStudentLeave(s.admissionNo));
+    actions.appendChild(leavesBtn);
+
+    const editBtn = document.createElement("button");
+    editBtn.className = "toolbar-btn ok";
+    editBtn.textContent = "Edit";
+    editBtn.addEventListener("click", ()=>openEditStudent(s.admissionNo));
+    actions.appendChild(editBtn);
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "warn";
+    delBtn.textContent = "Delete";
+    delBtn.addEventListener("click", ()=>deleteStudent(s.admissionNo));
+    actions.appendChild(delBtn);
+
     card.appendChild(actions);
   }
   return card;
@@ -758,6 +862,86 @@ function addStudentManual(){
   alert("Student added and saved.\nछात्र सफलतापूर्वक सहेजा गया।");
 }
 $("#addStudentBtn").addEventListener("click", addStudentManual);
+
+/* ==========================
+   EDIT / DELETE STUDENT (Teacher1)
+========================== */
+let editingAdmissionNo = null;
+
+function openEditStudent(adm){
+  if(currentUserRole !== "teacher1"){
+    alert("Only Teacher1 can edit students.\nकेवल Teacher1 ही छात्र संपादित कर सकते हैं।");
+    return;
+  }
+  const s = students.find(st => st.admissionNo === adm);
+  if(!s){
+    alert("Student not found.\nछात्र नहीं मिला।");
+    return;
+  }
+  editingAdmissionNo = adm;
+  $("#editAdmissionNo").textContent = s.admissionNo || "";
+  $("#editName").value = s.name || "";
+  $("#editClass").value = s.class || "";
+  $("#editHostel").value = s.hostel || "";
+  $("#editPhone").value = s.phone || "";
+  $("#editEmail").value = s.email || "";
+  $("#editFather").value = s.fatherName || "";
+  $("#editMother").value = s.motherName || "";
+  $("#editAddress").value = s.address || "";
+  $("#studentModalBackdrop").classList.remove("hidden");
+}
+
+function closeStudentModal(){
+  $("#studentModalBackdrop").classList.add("hidden");
+  editingAdmissionNo = null;
+}
+
+function saveStudentEdit(){
+  if(!editingAdmissionNo) return;
+  const s = students.find(st => st.admissionNo === editingAdmissionNo);
+  if(!s){
+    alert("Student not found.\nछात्र नहीं मिला।");
+    return;
+  }
+  s.name = ($("#editName").value || "").trim();
+  s.class = ($("#editClass").value || "").trim();
+  s.hostel = $("#editHostel").value || "";
+  s.phone = ($("#editPhone").value || "").trim();
+  s.email = ($("#editEmail").value || "").trim();
+  s.fatherName = ($("#editFather").value || "").trim();
+  s.motherName = ($("#editMother").value || "").trim();
+  s.address = ($("#editAddress").value || "").trim();
+
+  localStorage.setItem("students_seed_v2", JSON.stringify(students));
+  closeStudentModal();
+  filterStudents();
+  searchLeaveStudent();
+  alert("Student details updated.\nछात्र विवरण अपडेट हो गए हैं।");
+}
+
+function deleteStudent(adm){
+  if(currentUserRole !== "teacher1"){
+    alert("Only Teacher1 can delete students.\nकेवल Teacher1 ही छात्र हटाने की अनुमति रखते हैं।");
+    return;
+  }
+  if(!confirm("Delete this student?\nक्या आप इस छात्र को हटाना चाहते हैं?")) return;
+  students = students.filter(s => s.admissionNo !== adm);
+  localStorage.setItem("students_seed_v2", JSON.stringify(students));
+  filterStudents();
+  searchLeaveStudent();
+  alert("Student deleted.\nछात्र हटाया गया।");
+}
+
+/* modal buttons */
+$("#editCloseBtn").addEventListener("click", closeStudentModal);
+$("#editCancelBtn").addEventListener("click", closeStudentModal);
+$("#editSaveBtn").addEventListener("click", saveStudentEdit);
+/* close modal on backdrop click */
+$("#studentModalBackdrop").addEventListener("click", (e)=>{
+  if(e.target === e.currentTarget){
+    closeStudentModal();
+  }
+});
 
 /* ==========================
    LEAVES
@@ -1016,8 +1200,7 @@ $("#exportStudentsBtn").addEventListener("click", ()=>{
 });
 
 /* ==========================
-   LOAD STUDENT DATA BUTTON
-   (sync from coreStudents again)
+   LOAD CORE STUDENT DATA
 ========================== */
 function loadStudentData() {
   if (!confirm("Are you sure you want to load the latest student data from app code?\nक्या आप निश्चित हैं कि आप ऐप कोड से नया छात्र डेटा लोड करना चाहते हैं?")) return;
@@ -1026,9 +1209,9 @@ function loadStudentData() {
 
   try {
     syncCoreStudentsIntoLocal();
-    alert("Latest student data synced from core list.\nनया छात्र डेटा कोर सूची से सिंक हो गया।");
     filterStudents();
     searchLeaveStudent();
+    alert("Latest student data synced from core list.\nनया छात्र डेटा कोर सूची से सिंक हो गया।");
   } catch (e) {
     console.error("Error updating student data:", e);
     alert("Error updating data.\nडेटा अपडेट करते समय त्रुटि हुई।");
@@ -1055,7 +1238,6 @@ $("#addTimetableBtn").addEventListener("click", addTimetable);
 ========================== */
 $("#logoutBtn").addEventListener("click", ()=>{
   localStorage.removeItem(SESSION_KEY);
-  // keep stored data (students, leaves, etc.) forever in localStorage
   location.reload();
 });
 
